@@ -1,0 +1,74 @@
+SHELL := /bin/bash
+# Syntax of a Makefile target:
+#
+# target: dependency1 dependency2 ...
+#	process (command to generate target from dependencies)
+
+# If no targets are specified when calling make, it will build the first target
+# in the file. The first target is usually called 'all'
+all: env tb_mux6short.ghw mux6short.bin 
+
+# Phony targets are always executed, even if a file with the same name exists
+# These are typically short names for other recipes
+.PHONY: all prog clean
+
+##################
+### Simulation ###
+##################
+
+# Analyze vhdl sources for simulation
+mux6short.o: mux6short.vhd
+	ghdl -a mux6short.vhd
+
+	
+tb_mux6short.o: tb_mux6short.vhd
+	ghdl -a tb_mux6short.vhd
+
+# Generate simulation executable
+tb_mux6short: tb_mux6short.o mux6short.o
+	ghdl -e tb_mux6short
+
+# Generate simulation waveform
+tb_mux6short.ghw: tb_mux6short
+	./tb_mux6short --wave=tb_mux6short.ghw
+
+# Open gtkwave
+view: tb_mux6short.ghw
+	gtkwave tb_mux6short.ghw
+
+######################
+### Implementation ###
+######################
+
+# Synthesize
+mux6short.json: 
+	yosys -m ghdl -p 'ghdl mux6short.vhd -e mux6short; synth_ice40 -json mux6short.json'
+
+# Place and route
+mux6short.asc: mux6short.json
+	nextpnr-ice40 --up5k --package sg48 --pcf mux6short.pcf --json mux6short.json --asc mux6short.asc
+
+# Bitstream generation
+mux6short.bin: mux6short.asc
+	icepack mux6short.asc mux6short.bin
+
+# Configure the FPGA
+prog: mux6short.bin
+	iceprog mux6short.bin
+
+###############
+### Cleanup ###
+###############
+
+# Clean:
+clean:
+	rm -f *.o *.ghw work-obj??.cf tb_mux6short
+	rm -f *.json *.asc *.bin
+
+###############
+### Entorno ###
+###############
+
+# Entorno:
+env:
+	source ~/fosshdl/env.rc

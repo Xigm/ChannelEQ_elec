@@ -1,0 +1,3 @@
+<testsuite name="testsuite" errors="0" failures="0" skipped="0" tests="1" hostname="linux"><testcase classname="src_lib.tb_example" name="all" time="1.9"><system-out>/home/salas/Escritorio/Universidad/Electronica/Linux/P2/tb_example.vhd:13:5:@0ms:(report note): Hello world!
+simulation stopped @0ms with status 0
+</system-out></testcase></testsuite>

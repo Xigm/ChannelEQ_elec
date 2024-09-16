@@ -1,0 +1,76 @@
+SHELL := /bin/bash
+# Syntax of a Makefile target:
+#
+# target: dependency1 dependency2 ...
+#	process (command to generate target from dependencies)
+
+# If no targets are specified when calling make, it will build the first target
+# in the file. The first target is usually called 'all'
+all: env tb_mux5instantiate3mux.ghw mux5instantiate3mux.bin 
+
+# Phony targets are always executed, even if a file with the same name exists
+# These are typically short names for other recipes
+.PHONY: all prog clean
+
+##################
+### Simulation ###
+##################
+
+# Analyze vhdl sources for simulation
+mux5instantiate3mux.o: mux5instantiate3mux.vhd
+	ghdl -a mux5instantiate3mux.vhd
+
+mux.o: mux.vhd
+	ghdl -a mux.vhd
+	
+tb_mux5instantiate3mux.o: tb_mux5instantiate3mux.vhd
+	ghdl -a tb_mux5instantiate3mux.vhd
+
+# Generate simulation executable
+tb_mux5instantiate3mux: tb_mux5instantiate3mux.o mux.o mux5instantiate3mux.o
+	ghdl -e tb_mux5instantiate3mux
+
+# Generate simulation waveform
+tb_mux5instantiate3mux.ghw: tb_mux5instantiate3mux
+	./tb_mux5instantiate3mux --wave=tb_mux5instantiate3mux.ghw
+
+# Open gtkwave
+view: tb_mux5instantiate3mux.ghw
+	gtkwave tb_mux5instantiate3mux.ghw
+
+######################
+### Implementation ###
+######################
+
+# Synthesize
+mux5instantiate3mux.json: 
+	yosys -m ghdl -p 'ghdl mux5instantiate3mux.vhd -e mux5instantiate3mux; synth_ice40 -json mux5instantiate3mux.json'
+
+# Place and route
+mux5instantiate3mux.asc: mux5instantiate3mux.json
+	nextpnr-ice40 --up5k --package sg48 --pcf mux5instantiate3mux.pcf --json mux5instantiate3mux.json --asc mux5instantiate3mux.asc
+
+# Bitstream generation
+mux5instantiate3mux.bin: mux5instantiate3mux.asc
+	icepack mux5instantiate3mux.asc mux5instantiate3mux.bin
+
+# Configure the FPGA
+prog: mux5instantiate3mux.bin
+	iceprog mux5instantiate3mux.bin
+
+###############
+### Cleanup ###
+###############
+
+# Clean:
+clean:
+	rm -f *.o *.ghw work-obj??.cf tb_mux5instantiate3mux
+	rm -f *.json *.asc *.bin
+
+###############
+### Entorno ###
+###############
+
+# Entorno:
+env:
+	source ~/fosshdl/env.rc

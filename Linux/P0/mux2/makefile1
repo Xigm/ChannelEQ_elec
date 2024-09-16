@@ -1,0 +1,73 @@
+SHELL := /bin/bash
+# Syntax of a Makefile target:
+#
+# target: dependency1 dependency2 ...
+#	process (command to generate target from dependencies)
+
+# If no targets are specified when calling make, it will build the first target
+# in the file. The first target is usually called 'all'
+all: env tb_mux1ifelse.ghw mux1ifelse.bin
+
+# Phony targets are always executed, even if a file with the same name exists
+# These are typically short names for other recipes
+.PHONY: all prog clean
+
+##################
+### Simulation ###
+##################
+
+# Analyze vhdl sources for simulation
+mux1ifelse.o: mux1ifelse.vhd
+	ghdl -a mux1ifelse.vhd
+
+tb_mux1ifelse.o: tb_mux1ifelse.vhd
+	ghdl -a tb_mux1ifelse.vhd
+
+# Generate simulation executable
+tb_mux1ifelse: tb_mux1ifelse.o mux1ifelse.o
+	ghdl -e tb_mux1ifelse
+
+# Generate simulation waveform
+tb_mux1ifelse.ghw: tb_mux1ifelse
+	./tb_mux1ifelse --wave=tb_mux1ifelse.ghw
+
+# Open gtkwave
+view: tb_mux1ifelse.ghw
+	gtkwave tb_mux1ifelse.ghw
+
+######################
+### Implementation ###
+######################
+
+# Synthesize
+mux1ifelse.json: mux1ifelse.vhd
+	yosys -m ghdl -p 'ghdl mux1ifelse.vhd -e mux1ifelse; synth_ice40 -json mux1ifelse.json'
+
+# Place and route
+mux1ifelse.asc: mux1ifelse.json
+	nextpnr-ice40 --up5k --package sg48 --pcf mux1ifelse.pcf --json mux1ifelse.json --asc mux1ifelse.asc
+
+# Bitstream generation
+mux1ifelse.bin: mux1ifelse.asc
+	icepack mux1ifelse.asc mux1ifelse.bin
+
+# Configure the FPGA
+prog: mux1ifelse.bin
+	iceprog mux1ifelse.bin
+
+###############
+### Cleanup ###
+###############
+
+# Clean:
+clean:
+	rm -f *.o *.ghw work-obj??.cf tb_mux1ifelse
+	rm -f *.json *.asc *.bin
+
+###############
+### Entorno ###
+###############
+
+# Entorno:
+env:
+	source ~/fosshdl/env.rc

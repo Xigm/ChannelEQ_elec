@@ -1,0 +1,11 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1644504360" />
+    <testcase name="testFlatChannel" classname="tb_full" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/FullSystemCCTb/tb_full.py" lineno="56" time="4.086847305297852" sim_time_ns="1201.000001" ratio_time="293.8695554989595" />
+    <testcase name="testReset" classname="tb_full" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/FullSystemCCTb/tb_full.py" lineno="186" time="8.628508567810059" sim_time_ns="3599.0000009999994" ratio_time="417.1056878156912" />
+    <testcase name="testVsOctaveFlatMode2" classname="tb_full" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/FullSystemCCTb/tb_full.py" lineno="258" time="66.02607941627502" sim_time_ns="3599.0000009999994" ratio_time="54.50876430674253" />
+    <testcase name="testVsOctaveMode2" classname="tb_full" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/FullSystemCCTb/tb_full.py" lineno="489" time="66.81629705429077" sim_time_ns="3599.0000010000003" ratio_time="53.86410441266562" />
+    <testcase name="testVsOctaveMode8" classname="tb_full" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/FullSystemCCTb/tb_full.py" lineno="720" time="248.7308704853058" sim_time_ns="14399.000001000002" ratio_time="57.889879020266804" />
+    <testcase name="testVsOctaveNoisy" classname="tb_full" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/FullSystemCCTb/tb_full.py" lineno="937" time="97.29779934883118" sim_time_ns="57599.000001" ratio_time="591.9866675966288" />
+  </testsuite>
+</testsuites>

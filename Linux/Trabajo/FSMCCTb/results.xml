@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1643296758" />
+    <testcase name="test1" classname="tb_FSM" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/FSMCCTb/tb_FSM.py" lineno="22" time="0.17956805229187012" sim_time_ns="127.000001" ratio_time="707.2527622762988" />
+  </testsuite>
+</testsuites>

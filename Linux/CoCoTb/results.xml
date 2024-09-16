@@ -1,0 +1,7 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1642089132" />
+    <testcase name="my_first_test" classname="test_my_design" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/CoCoTb/test_my_design.py" lineno="10" time="0.01977062225341797" sim_time_ns="20.000001" ratio_time="1011.6019993524674" />
+    <testcase name="my_second_test" classname="test_my_design" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/CoCoTb/test_my_design.py" lineno="41" time="0.08002686500549316" sim_time_ns="14.000001000000001" ratio_time="174.94126502442674" />
+  </testsuite>
+</testsuites>

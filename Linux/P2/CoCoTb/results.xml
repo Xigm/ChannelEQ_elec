@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1644425398" />
+    <testcase name="testOtave" classname="comparePRBSOctaveCoCoTb" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/P2/CoCoTb/comparePRBSOctaveCoCoTb.py" lineno="17" time="52.76825976371765" sim_time_ns="288.000001" ratio_time="5.457826395821807" />
+  </testsuite>
+</testsuites>

@@ -1,0 +1,59 @@
+# 12 MHz clock
+set_io clk12    35
+
+# Reset button, active low
+set_io rst      10
+
+# Heartbeat led, chech that the PLL clock exists
+set_io pll_locked_led     11
+set_io heart_led          37
+
+# Pushbuttons, active low
+# button_{left,center,right} are the ones in PMOD2
+set_io button_left      20
+set_io button_center    19
+set_io button_right     18
+
+# VGA pins are in PMOD1A and PMOD1B
+#
+# PMOD1A
+# |----------|------------|----------|
+# | VGA PMOD | PMOD1A pin | FPGA pin |
+# |----------|------------|----------|
+# | B0       | 7          | 3        |
+# | R0       | 1          | 4        |
+# | B1       | 8          | 48       |
+# | R1       | 2          | 2        |
+# | B2       | 9          | 46       |
+# | R2       | 3          | 47       |
+# | B3       | 10         | 44       |
+# | R3       | 4          | 45       |
+# |----------|------------|----------|
+#
+# PMOD1B
+# |----------|------------|----------|
+# | VGA PMOD | PMOD1A pin | FPGA pin |
+# |----------|------------|----------|
+# | HS       | 7          | 42       |
+# | G0       | 1          | 43       |
+# | VS       | 8          | 36       |
+# | G1       | 2          | 38       |
+# | NC       | 9          | 32       |
+# | G2       | 3          | 34       |
+# | NC       | 10         | 28       |
+# | G3       | 4          | 31       |
+# |----------|------------|----------|
+set_io r[0]     4
+set_io r[1]     2
+set_io r[2]     47
+set_io r[3]     45
+set_io g[0]     43
+set_io g[1]     38
+set_io g[2]     34
+set_io g[3]     31
+set_io b[0]     3
+set_io b[1]     48
+set_io b[2]     46
+set_io b[3]     44
+set_io hs       42
+set_io vs       36

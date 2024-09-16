@@ -1,0 +1,73 @@
+SHELL := /bin/bash
+# Syntax of a Makefile target:
+#
+# target: dependency1 dependency2 ...
+#	process (command to generate target from dependencies)
+
+# If no targets are specified when calling make, it will build the first target
+# in the file. The first target is usually called 'all'
+all: env tb_mux3when.ghw mux3when.bin
+
+# Phony targets are always executed, even if a file with the same name exists
+# These are typically short names for other recipes
+.PHONY: all prog clean
+
+##################
+### Simulation ###
+##################
+
+# Analyze vhdl sources for simulation
+mux3when.o: mux3when.vhd
+	ghdl -a mux3when.vhd
+
+tb_mux3when.o: tb_mux3when.vhd
+	ghdl -a tb_mux3when.vhd
+
+# Generate simulation executable
+tb_mux3when: tb_mux3when.o mux3when.o
+	ghdl -e tb_mux3when
+
+# Generate simulation waveform
+tb_mux3when.ghw: tb_mux3when
+	./tb_mux3when --wave=tb_mux3when.ghw
+
+# Open gtkwave
+view: tb_mux3when.ghw
+	gtkwave tb_mux3when.ghw
+
+######################
+### Implementation ###
+######################
+
+# Synthesize
+mux3when.json: mux3when.vhd
+	yosys -m ghdl -p 'ghdl mux3when.vhd -e mux3when; synth_ice40 -json mux3when.json'
+
+# Place and route
+mux3when.asc: mux3when.json
+	nextpnr-ice40 --up5k --package sg48 --pcf mux3when.pcf --json mux3when.json --asc mux3when.asc
+
+# Bitstream generation
+mux3when.bin: mux3when.asc
+	icepack mux3when.asc mux3when.bin
+
+# Configure the FPGA
+prog: mux3when.bin
+	iceprog mux3when.bin
+
+###############
+### Cleanup ###
+###############
+
+# Clean:
+clean:
+	rm -f *.o *.ghw work-obj??.cf tb_mux3when
+	rm -f *.json *.asc *.bin
+
+###############
+### Entorno ###
+###############
+
+# Entorno:
+env:
+	source ~/fosshdl/env.rc

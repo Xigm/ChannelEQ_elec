@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1643296487" />
+    <testcase name="test1" classname="tb_estimador" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/EstimadorCCTb/tb_estimador.py" lineno="22" time="0.19791603088378906" sim_time_ns="39.000001" ratio_time="197.0532696409001" />
+  </testsuite>
+</testsuites>

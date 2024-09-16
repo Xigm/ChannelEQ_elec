@@ -1,0 +1,9 @@
+# Led
+set_io salida1	37
+set_io led1	26
+set_io led2	27
+set_io led3	25
+
+# Boton
+set_io entrada1	10
+set_io entrada2 20

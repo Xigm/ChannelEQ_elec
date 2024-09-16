@@ -1,0 +1,6 @@
+# Out
+set_io salida1	37
+
+# In
+set_io entrada1	10
+set_io entrada2 20

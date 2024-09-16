@@ -1,0 +1,73 @@
+SHELL := /bin/bash
+# Syntax of a Makefile target:
+#
+# target: dependency1 dependency2 ...
+#	process (command to generate target from dependencies)
+
+# If no targets are specified when calling make, it will build the first target
+# in the file. The first target is usually called 'all'
+all: env tb_mux2case.ghw mux2case.bin
+
+# Phony targets are always executed, even if a file with the same name exists
+# These are typically short names for other recipes
+.PHONY: all prog clean
+
+##################
+### Simulation ###
+##################
+
+# Analyze vhdl sources for simulation
+mux2case.o: mux2case.vhd
+	ghdl -a mux2case.vhd
+
+tb_mux2case.o: tb_mux2case.vhd
+	ghdl -a tb_mux2case.vhd
+
+# Generate simulation executable
+tb_mux2case: tb_mux2case.o mux2case.o
+	ghdl -e tb_mux2case
+
+# Generate simulation waveform
+tb_mux2case.ghw: tb_mux2case
+	./tb_mux2case --wave=tb_mux2case.ghw
+
+# Open gtkwave
+view: tb_mux2case.ghw
+	gtkwave tb_mux2case.ghw
+
+######################
+### Implementation ###
+######################
+
+# Synthesize
+mux2case.json: mux2case.vhd
+	yosys -m ghdl -p 'ghdl mux2case.vhd -e mux2case; synth_ice40 -json mux2case.json'
+
+# Place and route
+mux2case.asc: mux2case.json
+	nextpnr-ice40 --up5k --package sg48 --pcf mux2case.pcf --json mux2case.json --asc mux2case.asc
+
+# Bitstream generation
+mux2case.bin: mux2case.asc
+	icepack mux2case.asc mux2case.bin
+
+# Configure the FPGA
+prog: mux2case.bin
+	iceprog mux2case.bin
+
+###############
+### Cleanup ###
+###############
+
+# Clean:
+clean:
+	rm -f *.o *.ghw work-obj??.cf tb_mux2case
+	rm -f *.json *.asc *.bin
+
+###############
+### Entorno ###
+###############
+
+# Entorno:
+env:
+	source ~/fosshdl/env.rc

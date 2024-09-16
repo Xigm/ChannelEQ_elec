@@ -1,0 +1,7 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1643296871" />
+    <testcase name="test1" classname="tb_interMig" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/InterMigCCTb/tb_interMig.py" lineno="22" time="0.0984032154083252" sim_time_ns="73.000001" ratio_time="741.845687634146" />
+    <testcase name="test2" classname="tb_interMig" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/InterMigCCTb/tb_interMig.py" lineno="60" time="0.00960397720336914" sim_time_ns="13.000000999999997" ratio_time="1353.6059826797077" />
+  </testsuite>
+</testsuites>

@@ -1,0 +1,2 @@
+/home/salas/Escritorio/Universidad/Electronica/mig/Linux/P2/tb_example.vhd:13:5:@0ms:(report note): Hello world!
+simulation stopped @0ms with status 0

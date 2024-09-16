@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1643297457" />
+    <testcase name="test1" classname="tb_interpolator" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/InterpoladorCCTb/tb_interpolator.py" lineno="24" time="5.240543365478516" sim_time_ns="355.000001" ratio_time="67.741067336361" />
+  </testsuite>
+</testsuites>

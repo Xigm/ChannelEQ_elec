@@ -1,0 +1,73 @@
+SHELL := /bin/bash
+# Syntax of a Makefile target:
+#
+# target: dependency1 dependency2 ...
+#	process (command to generate target from dependencies)
+
+# If no targets are specified when calling make, it will build the first target
+# in the file. The first target is usually called 'all'
+all: env tb_mux4select.ghw mux4select.bin
+
+# Phony targets are always executed, even if a file with the same name exists
+# These are typically short names for other recipes
+.PHONY: all prog clean
+
+##################
+### Simulation ###
+##################
+
+# Analyze vhdl sources for simulation
+mux4select.o: mux4select.vhd
+	ghdl -a mux4select.vhd
+
+tb_mux4select.o: tb_mux4select.vhd
+	ghdl -a tb_mux4select.vhd
+
+# Generate simulation executable
+tb_mux4select: tb_mux4select.o mux4select.o
+	ghdl -e tb_mux4select
+
+# Generate simulation waveform
+tb_mux4select.ghw: tb_mux4select
+	./tb_mux4select --wave=tb_mux4select.ghw
+
+# Open gtkwave
+view: tb_mux4select.ghw
+	gtkwave tb_mux4select.ghw
+
+######################
+### Implementation ###
+######################
+
+# Synthesize
+mux4select.json: mux4select.vhd
+	yosys -m ghdl -p 'ghdl mux4select.vhd -e mux4select; synth_ice40 -json mux4select.json'
+
+# Place and route
+mux4select.asc: mux4select.json
+	nextpnr-ice40 --up5k --package sg48 --pcf mux4select.pcf --json mux4select.json --asc mux4select.asc
+
+# Bitstream generation
+mux4select.bin: mux4select.asc
+	icepack mux4select.asc mux4select.bin
+
+# Configure the FPGA
+prog: mux4select.bin
+	iceprog mux4select.bin
+
+###############
+### Cleanup ###
+###############
+
+# Clean:
+clean:
+	rm -f *.o *.ghw work-obj??.cf tb_mux4select
+	rm -f *.json *.asc *.bin
+
+###############
+### Entorno ###
+###############
+
+# Entorno:
+env:
+	source ~/fosshdl/env.rc

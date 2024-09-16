@@ -1,0 +1,9 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1644446668" />
+    <testcase name="testIfWorks" classname="tb_toplevel" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/TopLevelCCTb/tb_toplevel.py" lineno="50" time="6.947524547576904" sim_time_ns="3599.000001" ratio_time="518.0262374539183" />
+    <testcase name="testReset" classname="tb_toplevel" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/TopLevelCCTb/tb_toplevel.py" lineno="119" time="4.693838357925415" sim_time_ns="3599.000001" ratio_time="766.7498807075852" />
+    <testcase name="testVsOctaveMode2" classname="tb_toplevel" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/TopLevelCCTb/tb_toplevel.py" lineno="189" time="30.5517737865448" sim_time_ns="3599.0000009999994" ratio_time="117.80003433335915" />
+    <testcase name="testVsOctaveMode8" classname="tb_toplevel" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/TopLevelCCTb/tb_toplevel.py" lineno="361" time="152.8734347820282" sim_time_ns="14399.000001000002" ratio_time="94.1890265076503" />
+  </testsuite>
+</testsuites>

@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1643300369" />
+    <testcase name="test1" classname="tb_controladorCtrlRAM" file="/home/salas/Escritorio/Universidad/Electronica/mig/Linux/Trabajo/WrapContadoresCCTb/tb_controladorCtrlRAM.py" lineno="22" time="0.452578067779541" sim_time_ns="99.000001" ratio_time="218.74679320126643" />
+  </testsuite>
+</testsuites>
