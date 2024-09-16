@@ -1,0 +1,18 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZsh{} try avoids int(XXX) or int(uuu) case}
+\PYG{c+c1}{\PYGZsh{} this could be avoided by cocotb\PYGZsq{}s}
+\PYG{c+c1}{\PYGZsh{} resolve u, which would change u bit values to}
+\PYG{c+c1}{\PYGZsh{} one at our choice, but we would lose some sight of}
+\PYG{c+c1}{\PYGZsh{} what is happening.}
+\PYG{k}{try}\PYG{p}{:}
+	\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{inf\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+	\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{inf\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+	\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{sup\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+	\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{sup\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+\PYG{k}{except}\PYG{p}{:}
+	\PYG{k}{pass}
+\PYG{k}{else}\PYG{p}{:}
+	\PYG{c+c1}{\PYGZsh{} if pilots values are correctly casted into int, check if they got wrong values (samples values are represented by 69)}
+	\PYG{k}{if} \PYG{n}{dut}\PYG{o}{.}\PYG{n}{inf\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{==} \PYG{l+m+mi}{69} \PYG{o+ow}{or} \PYG{n}{dut}\PYG{o}{.}\PYG{n}{inf\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{==} \PYG{l+m+mi}{69} \PYG{o+ow}{or} \PYG{n}{dut}\PYG{o}{.}\PYG{n}{sup\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{==} \PYG{l+m+mi}{69} \PYG{o+ow}{or} \PYG{n}{dut}\PYG{o}{.}\PYG{n}{sup\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{==} \PYG{l+m+mi}{69}\PYG{p}{:}
+		\PYG{k}{raise} \PYG{l+s+s2}{\PYGZdq{}El valor incorrecto ha sido propagaddo!\PYGZdq{}}
+\end{Verbatim}

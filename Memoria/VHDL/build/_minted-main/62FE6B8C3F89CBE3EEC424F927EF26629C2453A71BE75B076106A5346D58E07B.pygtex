@@ -1,0 +1,30 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZsh{}  Makefile}
+
+\PYG{c+c1}{\PYGZsh{} defaults}
+SIM ?\PYG{o}{=} ghdl
+TOPLEVEL\PYGZus{}LANG ?\PYG{o}{=} vhdl
+
+\PYG{n+nv}{VHDL\PYGZus{}SOURCES} \PYG{o}{+=} \PYG{k}{\PYGZdl{}(}PWD\PYG{k}{)}/../interpolatorMig.vhd
+\PYG{n+nv}{VHDL\PYGZus{}SOURCES} \PYG{o}{+=} \PYG{k}{\PYGZdl{}(}PWD\PYG{k}{)}/../PRBS.vhd
+\PYG{n+nv}{VHDL\PYGZus{}SOURCES} \PYG{o}{+=} \PYG{k}{\PYGZdl{}(}PWD\PYG{k}{)}/../delayer.vhd
+\PYG{n+nv}{VHDL\PYGZus{}SOURCES} \PYG{o}{+=} \PYG{k}{\PYGZdl{}(}PWD\PYG{k}{)}/../contador1\PYGZus{}12.vhd
+\PYG{n+nv}{VHDL\PYGZus{}SOURCES} \PYG{o}{+=} \PYG{k}{\PYGZdl{}(}PWD\PYG{k}{)}/../FSM.vhd
+\PYG{n+nv}{VHDL\PYGZus{}SOURCES} \PYG{o}{+=} \PYG{k}{\PYGZdl{}(}PWD\PYG{k}{)}/../toplevel.vhd
+
+\PYG{c+c1}{\PYGZsh{} VHDL\PYGZus{}SOURCES\PYGZus{}lib += \PYGZdl{}(PWD)/../edc\PYGZus{}common.vhd}
+
+\PYG{c+c1}{\PYGZsh{} version of GHDL}
+GHDL\PYGZus{}ARGS ?\PYG{o}{=} \PYGZhy{}\PYGZhy{}std\PYG{o}{=}\PYG{l+m}{08}
+
+\PYG{c+c1}{\PYGZsh{} TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file}
+\PYG{n+nv}{TOPLEVEL} \PYG{o}{=} toplevel
+
+\PYG{n+nv}{SIM\PYGZus{}ARGS} \PYG{o}{+=}\PYGZhy{}\PYGZhy{}wave\PYG{o}{=}tb\PYGZus{}toplevel.ghw
+
+\PYG{c+c1}{\PYGZsh{} MODULE is the basename of the Python test file}
+\PYG{n+nv}{MODULE} \PYG{o}{=} tb\PYGZus{}toplevel
+
+\PYG{c+c1}{\PYGZsh{} include cocotb\PYGZsq{}s make rules to take care of the simulator setup}
+include \PYG{k}{\PYGZdl{}(}shell cocotb\PYGZhy{}config \PYGZhy{}\PYGZhy{}makefiles\PYG{k}{)}/Makefile.sim
+\end{Verbatim}

@@ -1,0 +1,138 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{function}\PYG{+w}{ }[tx,bits\PYGZus{}tx]\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nf}{OFDM\PYGZus{}TX\PYGZus{}DVT}\PYG{p}{(}NFFT,NCP,useCarrier,NUM\PYGZus{}SYMB,SEED,CONSTEL,SNR,verbose\PYG{p}{)}
+
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{n+nb}{nargin}\PYG{+w}{ }\PYG{o}{==}\PYG{+w}{ }\PYG{l+m+mi}{0}
+\PYG{+w}{        }\PYG{c}{\PYGZpc{}\PYGZpc{} Configuración del sistema OFDM}
+\PYG{+w}{        }\PYG{n}{NFFT}\PYG{p}{=}\PYG{l+m+mi}{128}\PYG{p}{;}\PYG{+w}{            }\PYG{c}{\PYGZpc{} Número de portadoras de la OFDM}
+\PYG{+w}{        }\PYG{n}{NCP}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{12}\PYG{p}{;}\PYG{+w}{            }\PYG{c}{\PYGZpc{} Número de muestras del prefijo cíclico}
+\PYG{+w}{        }\PYG{n}{NDATA}\PYG{p}{=}\PYG{l+m+mi}{97}\PYG{p}{;}\PYG{+w}{            }\PYG{c}{\PYGZpc{} Número de portadoras utilizadas}
+\PYG{+w}{        }\PYG{n}{NUM\PYGZus{}SYMB}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{10}\PYG{p}{;}\PYG{+w}{       }\PYG{c}{\PYGZpc{} Número de símbols a transmitir}
+\PYG{+w}{        }\PYG{n}{SEED}\PYG{p}{=}\PYG{l+m+mi}{100}\PYG{p}{;}\PYG{+w}{            }\PYG{c}{\PYGZpc{} Semilla para el generador de números aleatorios}
+\PYG{+w}{        }\PYG{n}{CONSTEL}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZsq{}QPSK\PYGZsq{}}\PYG{p}{;}\PYG{+w}{    }\PYG{c}{\PYGZpc{} Constelación utilizada BPSK o QPSK}
+\PYG{+w}{        }\PYG{n}{SNR}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{10}\PYG{p}{;}\PYG{+w}{            }\PYG{c}{\PYGZpc{} SNR en dB}
+\PYG{+w}{    }\PYG{k}{end}
+\PYG{+w}{    }\PYG{n+nb}{tic}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Colocación de los pilotos}
+\PYG{+w}{    }\PYG{n}{pilotsLoc}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{l+m+mi}{12}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{NDATA}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{useCarrier}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n+nb}{length}\PYG{p}{(}\PYG{n}{pilotsLoc}\PYG{p}{);}
+\PYG{+w}{    }\PYG{n}{dataLoc}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{setdiff}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{,}\PYG{n}{pilotsLoc}\PYG{p}{);}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Secuencia de pilotos}
+\PYG{c}{\PYGZpc{}     PRBS = ones(1,11);}
+\PYG{c}{\PYGZpc{}     pilotos = [];}
+\PYG{c}{\PYGZpc{}     limit = useCarrier*NUM\PYGZus{}SYMB+11*NUM\PYGZus{}SYMB;}
+\PYG{c}{\PYGZpc{}     for i = 1:(limit)}
+\PYG{c}{\PYGZpc{}         cuenta = xor(PRBS(end\PYGZhy{}2), PRBS(end));}
+\PYG{c}{\PYGZpc{}         Salida = PRBS(end); }
+\PYG{c}{\PYGZpc{}         PRBS = circshift(PRBS,1);}
+\PYG{c}{\PYGZpc{}         PRBS(1) = cuenta;}
+\PYG{c}{\PYGZpc{}         if (find(i == 1:12:(limit)) \PYGZti{}= 0)}
+\PYG{c}{\PYGZpc{}            pilotos = [pilotos, Salida];}
+\PYG{c}{\PYGZpc{}         end}
+\PYG{c}{\PYGZpc{}     end}
+\PYG{c}{\PYGZpc{}     pilotos = (pilotos\PYGZhy{}0.5)*2;}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{n}{PRBS}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{ones}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{11}\PYG{p}{);}
+\PYG{+w}{    }\PYG{n}{limit}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{length}\PYG{p}{(}\PYG{n}{pilotsLoc}\PYG{p}{)}\PYG{o}{*}\PYG{n}{NUM\PYGZus{}SYMB}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{pilotos}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{zeros}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n}{limit}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{for}\PYG{+w}{ }\PYG{n+nb}{i}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{:(}\PYG{n}{limit}\PYG{p}{)}
+\PYG{+w}{        }\PYG{n}{cuenta}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{xor}\PYG{p}{(}\PYG{n}{PRBS}\PYG{p}{(}\PYG{k}{end}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{2}\PYG{p}{),}\PYG{+w}{ }\PYG{n}{PRBS}\PYG{p}{(}\PYG{k}{end}\PYG{p}{));}
+\PYG{+w}{        }\PYG{n}{Salida}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{PRBS}\PYG{p}{(}\PYG{k}{end}\PYG{p}{);}\PYG{+w}{ }
+\PYG{+w}{        }\PYG{n}{PRBS}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{circshift}\PYG{p}{(}\PYG{n}{PRBS}\PYG{p}{,}\PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{PRBS}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{cuenta}\PYG{p}{;}
+\PYG{+w}{        }\PYG{n}{pilotos}\PYG{p}{(}\PYG{n+nb}{i}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{Salida}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{end}
+\PYG{+w}{    }\PYG{n}{pilotos}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{pilotos}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{0.5}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{p}{;}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Inicializamos el generador de números aleatorios con la semilla}
+\PYG{+w}{    }\PYG{n+nb}{rng}\PYG{p}{(}\PYG{n}{SEED}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Definición de la constelación}
+\PYG{+w}{    }\PYG{k}{switch}\PYG{+w}{ }\PYG{n}{CONSTEL}
+\PYG{+w}{        }\PYG{k}{case}\PYG{+w}{ }\PYG{l+s}{\PYGZsq{}BPSK\PYGZsq{}}
+\PYG{+w}{            }\PYG{n}{M}\PYG{p}{=}\PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{+w}{            }\PYG{n}{C}\PYG{p}{=[}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{];}
+\PYG{+w}{        }\PYG{k}{case}\PYG{+w}{ }\PYG{l+s}{\PYGZsq{}QPSK\PYGZsq{}}
+\PYG{+w}{            }\PYG{n}{C}\PYG{p}{=[}\PYG{l+m+mi}{1}\PYG{o}{+}1\PYG{n+nb}{i}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}1\PYG{n+nb}{i}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{o}{+}1\PYG{n+nb}{i}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}1\PYG{n+nb}{i}\PYG{p}{]}\PYG{o}{/}\PYG{n+nb}{sqrt}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{);}
+\PYG{+w}{            }\PYG{n}{M}\PYG{p}{=}\PYG{l+m+mi}{2}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{case}\PYG{+w}{ }\PYG{l+s}{\PYGZsq{}16QAM\PYGZsq{}}
+\PYG{+w}{            }\PYG{c}{\PYGZpc{} grey}
+\PYG{+w}{            }\PYG{n}{C}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{o}{+}1\PYG{n+nb}{j}\PYG{o}{.*}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{];}
+\PYG{+w}{            }\PYG{c}{\PYGZpc{} añadir normalización}
+\PYG{+w}{            }\PYG{n}{C}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{C}\PYG{o}{/}\PYG{p}{(}\PYG{n+nb}{sqrt}\PYG{p}{(}\PYG{n+nb}{norm}\PYG{p}{(}\PYG{n}{C}\PYG{p}{)));}
+\PYG{+w}{            }\PYG{n}{M}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{end}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{verbose}
+\PYG{+w}{        }\PYG{n+nb}{scatter}\PYG{p}{(}\PYG{n+nb}{real}\PYG{p}{(}\PYG{n}{C}\PYG{p}{),}\PYG{n+nb}{imag}\PYG{p}{(}\PYG{n}{C}\PYG{p}{));}
+\PYG{+w}{        }\PYG{n}{grid}
+\PYG{+w}{        }\PYG{l+s}{title(\PYGZsq{}Constelación\PYGZsq{})}
+\PYG{+w}{    }\PYG{k}{end}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{c}{\PYGZpc{}\PYGZpc{} Tx}
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Generación de los bits a transmitir}
+\PYG{+w}{    }\PYG{n}{numbits}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{NUM\PYGZus{}SYMB}\PYG{o}{*}\PYG{n}{NDATA}\PYG{o}{*}\PYG{n}{M}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{bits\PYGZus{}tx}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{rand}\PYG{p}{(}\PYG{n}{numbits}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{o}{\PYGZgt{}}\PYG{l+m+mf}{0.5}\PYG{p}{;}\PYG{+w}{ }\PYG{c}{\PYGZpc{} numbits x 1}
+
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Bits to symbols}
+\PYG{+w}{    }\PYG{n}{aux}\PYG{+w}{  }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{reshape}\PYG{p}{(}\PYG{n}{bits\PYGZus{}tx}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{M}\PYG{p}{,}\PYG{+w}{ }\PYG{p}{[]).}\PYG{o}{\PYGZsq{}}\PYG{p}{;}\PYG{+w}{ }\PYG{c}{\PYGZpc{} numbits/M x M}
+\PYG{+w}{    }\PYG{n}{symb}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{zeros}\PYG{p}{(}\PYG{n+nb}{size}\PYG{p}{(}\PYG{n}{aux}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{),}\PYG{l+m+mi}{1}\PYG{p}{);}\PYG{+w}{     }\PYG{c}{\PYGZpc{} numbits/M x 1}
+\PYG{+w}{    }\PYG{n}{pot2}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{kron}\PYG{p}{(}\PYG{n+nb}{ones}\PYG{p}{(}\PYG{n+nb}{length}\PYG{p}{(}\PYG{n}{symb}\PYG{p}{),}\PYG{l+m+mi}{1}\PYG{p}{),(}\PYG{l+m+mf}{2.}\PYGZca{}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{:}\PYG{n}{M}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)));}
+\PYG{+w}{    }\PYG{n}{symb}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n}{pot2}\PYG{o}{.*}\PYG{n}{aux}\PYG{p}{,}\PYG{l+m+mi}{2}\PYG{p}{);}\PYG{+w}{ }\PYG{c}{\PYGZpc{} primera columna = lsb }
+
+
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Mapper}
+\PYG{+w}{    }\PYG{n}{const\PYGZus{}points}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{C}\PYG{p}{(}\PYG{n}{symb}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{);}\PYG{+w}{ }\PYG{c}{\PYGZpc{} numbits/M x 1}
+
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{verbose}
+\PYG{+w}{        }\PYG{n+nb}{scatter}\PYG{p}{(}\PYG{n+nb}{real}\PYG{p}{(}\PYG{n}{const\PYGZus{}points}\PYG{p}{),}\PYG{n+nb}{imag}\PYG{p}{(}\PYG{n}{const\PYGZus{}points}\PYG{p}{));}
+\PYG{+w}{        }\PYG{n}{grid}
+\PYG{+w}{        }\PYG{l+s}{title(\PYGZsq{}Constelación transmitida\PYGZsq{})}
+\PYG{+w}{    }\PYG{k}{end}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Símbolos OFDM en frecuencia (rejilla tiempo frecuencia)}
+\PYG{+w}{    }\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{zeros}\PYG{p}{(}\PYG{n}{NFFT}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{NUM\PYGZus{}SYMB}\PYG{p}{);}\PYG{+w}{ }\PYG{c}{\PYGZpc{} NFFT x NUM\PYGZus{}SYMB}
+\PYG{+w}{    }\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx}\PYG{p}{(}\PYG{n+nb}{ceil}\PYG{p}{((}\PYG{n}{NFFT}\PYG{o}{\PYGZhy{}}\PYG{n}{useCarrier}\PYG{p}{)}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{pilotsLoc}\PYG{p}{),:)}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{o}{/}\PYG{l+m+mi}{3}\PYG{p}{)}\PYG{o}{*}\PYG{n+nb}{reshape}\PYG{p}{(}\PYG{n}{pilotos}\PYG{p}{,}\PYG{n+nb}{length}\PYG{p}{(}\PYG{n}{pilotsLoc}\PYG{p}{),}\PYG{n}{NUM\PYGZus{}SYMB}\PYG{p}{);}
+\PYG{+w}{    }\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx}\PYG{p}{(}\PYG{n+nb}{ceil}\PYG{p}{((}\PYG{n}{NFFT}\PYG{o}{\PYGZhy{}}\PYG{n}{useCarrier}\PYG{p}{)}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{n}{dataLoc}\PYG{p}{),:)}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{reshape}\PYG{p}{(}\PYG{n}{const\PYGZus{}points}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{NDATA}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{NUM\PYGZus{}SYMB}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{verbose}
+\PYG{+w}{        }\PYG{n+nb}{figure}
+\PYG{+w}{        }\PYG{n+nb}{stem}\PYG{p}{(}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx}\PYG{p}{(:,}\PYG{l+m+mi}{1}\PYG{p}{)));}\PYG{+w}{ }\PYG{c}{\PYGZpc{} Pintamos un único símbolo}
+\PYG{+w}{        }\PYG{n+nb}{grid}
+\PYG{+w}{        }\PYG{n+nb}{xlabel}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}Portadoras OFDM\PYGZsq{}}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n+nb}{ylabel}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}Amplitud\PYGZsq{}}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n+nb}{title}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}Espectro OFDM\PYGZsq{}}\PYG{p}{)}
+\PYG{+w}{    }\PYG{k}{end}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} ifftshift permite pasar de una representación del espectro con el f=0 en el}
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} centro a una representación con f=0 a la izquierda.}
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Importante el 1 para hacer la transformación en la dimensión correcta}
+\PYG{+w}{    }\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx}\PYG{p}{=}\PYG{n+nb}{ifftshift}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{);}\PYG{+w}{ }\PYG{c}{\PYGZpc{} NFFT x NUM\PYGZus{}SYMB}
+
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Modulacion OFDM}
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Importante el 1 para hacer la transformación en la dimensión correcta}
+\PYG{+w}{    }\PYG{n}{ofdm\PYGZus{}time}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{ifft}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{NFFT}\PYG{p}{,}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{);}\PYG{+w}{ }\PYG{c}{\PYGZpc{} NFFT x NUM\PYGZus{}SYMB}
+
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Prefijo cíclico de forma matricial}
+\PYG{+w}{    }\PYG{n}{ofdm\PYGZus{}time}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{[}\PYG{n}{ofdm\PYGZus{}time}\PYG{p}{(}\PYG{k}{end}\PYG{o}{\PYGZhy{}}\PYG{p}{(}\PYG{n}{NCP}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{):}\PYG{k}{end}\PYG{p}{,}\PYG{+w}{ }\PYG{p}{:);}\PYG{+w}{ }\PYG{n}{ofdm\PYGZus{}time}\PYG{p}{];}
+
+\PYG{+w}{    }\PYG{c}{\PYGZpc{} Salida secuencial (el : lee por columnas)}
+\PYG{+w}{    }\PYG{n}{tx}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{ofdm\PYGZus{}time}\PYG{p}{(:);}\PYG{+w}{ }\PYG{c}{\PYGZpc{} (NFFT+NCP)·NUM\PYGZus{}SYMB x 1}
+
+\PYG{+w}{    }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{verbose}
+\PYG{+w}{        }\PYG{n+nb}{figure}
+\PYG{+w}{        }\PYG{n+nb}{plot}\PYG{p}{(}\PYG{n+nb}{real}\PYG{p}{(}\PYG{n}{tx}\PYG{p}{),}\PYG{+w}{ }\PYG{l+s}{\PYGZsq{}b\PYGZhy{}\PYGZsq{}}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{hold}\PYG{+w}{ }\PYG{l+s}{on}
+\PYG{+w}{        }\PYG{n+nb}{plot}\PYG{p}{(}\PYG{n+nb}{imag}\PYG{p}{(}\PYG{n}{tx}\PYG{p}{),}\PYG{+w}{ }\PYG{l+s}{\PYGZsq{}r\PYGZhy{}\PYGZsq{}}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n+nb}{xlabel}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}Muestras temporales\PYGZsq{}}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n+nb}{ylabel}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}Amplitud\PYGZsq{}}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n+nb}{legend}\PYG{p}{(}\PYG{l+s}{\PYGZsq{}real\PYGZsq{}}\PYG{p}{,}\PYG{+w}{ }\PYG{l+s}{\PYGZsq{}imag\PYGZsq{}}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{grid}
+\PYG{+w}{        }\PYG{l+s}{title(\PYGZsq{}Señal OFDM en el tiempo\PYGZsq{})}
+\PYG{+w}{        }\PYG{c}{\PYGZpc{} Espectro de la señal transmitida}
+\PYG{+w}{        }\PYG{n+nb}{figure}
+\PYG{+w}{        }\PYG{n}{pwelch}\PYG{p}{(}\PYG{n}{tx}\PYG{p}{,[],[],[],}\PYG{n+nb}{pi}\PYG{p}{,}\PYG{l+s}{\PYGZsq{}maxhold\PYGZsq{}}\PYG{p}{,}\PYG{l+s}{\PYGZsq{}centered\PYGZsq{}}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{end}
+\PYG{k}{end}
+\end{Verbatim}

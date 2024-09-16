@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{if} \PYG{n}{MSEcomplex} \PYG{o}{\PYGZgt{}=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{20}\PYG{p}{:}
+	\PYG{k}{raise} \PYG{n+ne}{NameError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}El error es mayor que el límite establecido, }\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{ \PYGZgt{} \PYGZhy{}20 dB\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n}{MSEcomplex}\PYG{p}{)}
+\end{Verbatim}

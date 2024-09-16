@@ -1,0 +1,14 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} changing sign depending on PRBS}
+\PYG{k}{if}\PYG{+w}{ }\PYG{n}{PRBS}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{+w}{ }\PYG{k}{then}
+\PYG{+w}{	}\PYG{n}{p\PYGZus{}h\PYGZus{}sup\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{piloto\PYGZus{}y\PYGZus{}re}\PYG{p}{;}
+\PYG{+w}{	}\PYG{n}{p\PYGZus{}h\PYGZus{}sup\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{piloto\PYGZus{}y\PYGZus{}im}\PYG{p}{;}
+\PYG{+w}{	}\PYG{n}{p\PYGZus{}h\PYGZus{}inf\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{h\PYGZus{}sup\PYGZus{}re}\PYG{p}{;}
+\PYG{+w}{	}\PYG{n}{p\PYGZus{}h\PYGZus{}inf\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{h\PYGZus{}sup\PYGZus{}im}\PYG{p}{;}
+\PYG{k}{else}
+\PYG{+w}{	}\PYG{n}{p\PYGZus{}h\PYGZus{}sup\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{n}{piloto\PYGZus{}y\PYGZus{}re}\PYG{p}{;}
+\PYG{+w}{	}\PYG{n}{p\PYGZus{}h\PYGZus{}sup\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{n}{piloto\PYGZus{}y\PYGZus{}im}\PYG{p}{;}
+\PYG{+w}{	}\PYG{n}{p\PYGZus{}h\PYGZus{}inf\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{h\PYGZus{}sup\PYGZus{}re}\PYG{p}{;}
+\PYG{+w}{	}\PYG{n}{p\PYGZus{}h\PYGZus{}inf\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{h\PYGZus{}sup\PYGZus{}im}\PYG{p}{;}
+\PYG{k}{end}\PYG{+w}{ }\PYG{k}{if}\PYG{p}{;}
+\end{Verbatim}

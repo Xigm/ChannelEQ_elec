@@ -1,0 +1,28 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+	\PYG{n}{library} \PYG{n}{IEEE}\PYG{p}{;}
+
+	\PYG{n}{entity} \PYG{n}{ejemplo} \PYG{o+ow}{is}
+	\PYG{n}{port} \PYG{p}{(}
+		\PYG{n}{rst} \PYG{p}{:} \PYG{o+ow}{in} \PYG{n}{std\PYGZus{}logic}\PYG{p}{;}
+		\PYG{n}{clk} \PYG{p}{:} \PYG{o+ow}{in} \PYG{n}{std\PYGZus{}logic}\PYG{p}{;}
+	\PYG{p}{);}
+	\PYG{n}{end} \PYG{n}{ejemmplo}\PYG{p}{;}
+
+	\PYG{n}{architecture} \PYG{n}{arch\PYGZus{}ejemplo} \PYG{n}{of} \PYG{n}{ejemplo} \PYG{o+ow}{is}
+
+		\PYG{n}{signal} \PYG{n}{ejemplo\PYGZus{}signal} \PYG{p}{:} \PYG{n}{std\PYGZus{}logic\PYGZus{}vector}\PYG{p}{(}\PYG{l+m+mi}{9} \PYG{n}{downto} \PYG{l+m+mi}{0}\PYG{p}{);}
+	
+	\PYG{n}{begin}
+
+		\PYG{n}{sinc\PYGZus{}process} \PYG{p}{:} \PYG{n}{process} \PYG{p}{(}\PYG{n}{clk}\PYG{p}{,}\PYG{n}{rst}\PYG{p}{)}
+		\PYG{n}{begin}
+
+			\PYG{k}{if} \PYG{n}{rising\PYGZus{}edge}\PYG{p}{(}\PYG{n}{clk}\PYG{p}{)} \PYG{n}{then}
+				\PYG{n}{null}\PYG{p}{;}
+			\PYG{n}{end} \PYG{k}{if}\PYG{p}{;}
+
+		\PYG{n}{end} \PYG{n}{process}\PYG{p}{;}
+
+	\PYG{n}{end} \PYG{n}{architecture}\PYG{p}{;}
+
+\end{Verbatim}

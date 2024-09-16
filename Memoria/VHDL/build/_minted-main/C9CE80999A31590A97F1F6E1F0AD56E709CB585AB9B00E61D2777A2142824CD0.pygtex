@@ -1,0 +1,20 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nt}{test\PYGZus{}full}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/FullSystemCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/results.xml}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/eq.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/eq\PYGZus{}rst.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/vsOctave2.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/vsOctave8.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/estimacioncanalyeq.png}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/results.xml}
+\end{Verbatim}

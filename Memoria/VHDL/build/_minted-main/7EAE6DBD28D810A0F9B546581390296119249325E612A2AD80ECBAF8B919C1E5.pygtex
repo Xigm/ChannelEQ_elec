@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} adding \PYGZdq{}and y\PYGZus{}valid\PYGZus{}delayed\PYGZdq{} becouse if we stop and cuenta value is 11 we get many prbs}
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} enaPRBS \PYGZlt{}=  \PYGZsq{}1\PYGZsq{} when (cuenta\PYGZus{}value = \PYGZdq{}1011\PYGZdq{} and y\PYGZus{}valid\PYGZus{}delayed\PYGZus{}1 = \PYGZsq{}1\PYGZsq{})  else \PYGZsq{}0\PYGZsq{};}
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} hpgm didnt like PRBS the way i did it, fixed}
+\PYG{n}{enaPRBS}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{  }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{+w}{ }\PYG{k}{when}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{y\PYGZus{}valid\PYGZus{}delayed\PYGZus{}1}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{p}{)}\PYG{+w}{  }\PYG{k}{else}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}0\PYGZsq{}}\PYG{p}{;}
+
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} same with FSM}
+\PYG{n}{enaFSM}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{  }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{+w}{ }\PYG{k}{when}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{cuenta\PYGZus{}value}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}0000\PYGZdq{}}\PYG{+w}{ }\PYG{k}{and}\PYG{+w}{ }\PYG{n}{y\PYGZus{}valid\PYGZus{}delayed\PYGZus{}2}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{else}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}0\PYGZsq{}}\PYG{p}{;}
+\end{Verbatim}

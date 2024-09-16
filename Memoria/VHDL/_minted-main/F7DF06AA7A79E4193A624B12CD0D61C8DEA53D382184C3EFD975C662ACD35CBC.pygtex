@@ -1,0 +1,918 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{cocotb}
+\PYG{k+kn}{from} \PYG{n+nn}{cocotb.triggers} \PYG{k+kn}{import} \PYG{n}{Timer}
+\PYG{k+kn}{from} \PYG{n+nn}{cocotb.triggers} \PYG{k+kn}{import} \PYG{n}{RisingEdge}
+\PYG{c+c1}{\PYGZsh{} import matplotlib}
+\PYG{c+c1}{\PYGZsh{} matplotlib.use(\PYGZsq{}Agg\PYGZsq{})}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{from} \PYG{n+nn}{oct2py} \PYG{k+kn}{import} \PYG{n}{octave}
+\PYG{k+kn}{from} \PYG{n+nn}{numpy.linalg} \PYG{k+kn}{import} \PYG{n}{norm}
+
+\PYG{c+c1}{\PYGZsh{} some global vars}
+\PYG{n}{maxCyclesMaster} \PYG{o}{=} \PYG{l+m+mi}{1800}
+\PYG{n}{currentCycle} \PYG{o}{=} \PYG{l+m+mi}{0}
+\PYG{n}{useCarrierMaster} \PYG{o}{=} \PYG{l+m+mi}{1705}
+
+\PYG{c+c1}{\PYGZsh{} define whether if the test is gonna be run.}
+\PYG{n}{skipTest1} \PYG{o}{=} \PYG{k+kc}{True}
+\PYG{n}{skipTest2} \PYG{o}{=} \PYG{k+kc}{True}
+\PYG{n}{skipTest3} \PYG{o}{=} \PYG{k+kc}{True}
+\PYG{n}{skipTest4} \PYG{o}{=} \PYG{k+kc}{False}
+\PYG{n}{skipTest5} \PYG{o}{=} \PYG{k+kc}{True}
+
+\PYG{c+c1}{\PYGZsh{} this function will be very useful as it will convert from cocotbs signals return value}
+\PYG{c+c1}{\PYGZsh{} to int. It is design to hanlde bits representing signed of any size.}
+\PYG{k}{def} \PYG{n+nf}{fromsigned2int}\PYG{p}{(}\PYG{n}{bits}\PYG{p}{,}\PYG{n}{base}\PYG{p}{):}
+    \PYG{n}{v} \PYG{o}{=} \PYG{n}{base}\PYG{o}{**}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n}{bits}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{v}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{n}{v}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{n}{bits}\PYG{o}{*}\PYG{n}{np}\PYG{o}{.}\PYG{n}{kron}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{ones}\PYG{p}{((}\PYG{n}{bits}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],}\PYG{l+m+mi}{1}\PYG{p}{)),}\PYG{n}{v}\PYG{p}{),}\PYG{n}{axis}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} much much faster (halves time to compute)}
+\PYG{k}{def} \PYG{n+nf}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{bits}\PYG{p}{):}
+    \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n}{value}\PYG{o}{.}\PYG{n}{signed\PYGZus{}integer} \PYG{k}{for} \PYG{n}{value} \PYG{o+ow}{in} \PYG{n}{bits}\PYG{p}{])}
+
+\PYG{k}{def} \PYG{n+nf}{NMSE}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,}\PYG{n}{y}\PYG{p}{):}
+    \PYG{k}{return} \PYG{l+m+mi}{10}\PYG{o}{*}\PYG{n}{np}\PYG{o}{.}\PYG{n}{log10}\PYG{p}{((}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{x}\PYG{o}{\PYGZhy{}}\PYG{n}{y}\PYG{p}{)}\PYG{o}{/}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{x}\PYG{p}{)))}
+
+\PYG{c+c1}{\PYGZsh{} using norm instead of mean square}
+\PYG{k}{def} \PYG{n+nf}{RMSE}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,}\PYG{n}{y}\PYG{p}{):}
+    \PYG{k}{return} \PYG{l+m+mi}{10}\PYG{o}{*}\PYG{n}{np}\PYG{o}{.}\PYG{n}{log10}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{sqrt}\PYG{p}{((}\PYG{n}{norm}\PYG{p}{(((}\PYG{n}{x}\PYG{o}{\PYGZhy{}}\PYG{n}{y}\PYG{p}{)))}\PYG{o}{/}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{x}\PYG{p}{))))}
+
+\PYG{k}{def} \PYG{n+nf}{MAE}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,}\PYG{n}{y}\PYG{p}{):}
+    \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{abs}\PYG{p}{(}\PYG{n}{x}\PYG{o}{\PYGZhy{}}\PYG{n}{y}\PYG{p}{))}
+
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Generate clock pulses.\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{global} \PYG{n}{maxCyclesMaster}\PYG{p}{,}\PYG{n}{currentCycle}
+    \PYG{k}{for} \PYG{n}{cycle} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{maxCyclesMaster}\PYG{p}{):}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{await} \PYG{n}{Timer}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{units}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}ns\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+        \PYG{k}{await} \PYG{n}{Timer}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{units}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}ns\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{currentCycle} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{(}\PYG{n}{skip} \PYG{o}{=} \PYG{n}{skipTest1}\PYG{p}{)}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{testFlatChannel}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{c+c1}{\PYGZsh{} global makes the function able to access vars from outside}
+    \PYG{k}{global} \PYG{n}{maxCyclesMaster}\PYG{p}{,}\PYG{n}{currentCycle}
+    \PYG{n}{maxCycles} \PYG{o}{=} \PYG{n}{maxCyclesMaster}
+    \PYG{n}{out\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{out\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{signos} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{L} \PYG{o}{=} \PYG{l+m+mi}{50} \PYG{c+c1}{\PYGZsh{} segments of 12 data}
+    \PYG{n}{data\PYGZus{}re} \PYG{o}{=} \PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{round}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{rand}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{o}{*}\PYG{n}{L}\PYG{p}{)))}\PYG{o}{*}\PYG{l+m+mi}{200}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{100}
+    \PYG{n}{data\PYGZus{}im} \PYG{o}{=} \PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{round}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{rand}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{o}{*}\PYG{n}{L}\PYG{p}{)))}\PYG{o}{*}\PYG{l+m+mi}{200}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{100}
+    \PYG{n}{pilotos\PYGZus{}re} \PYG{o}{=} \PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]}\PYG{o}{/}\PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]}\PYG{o}{*}\PYG{l+m+mi}{100}
+    \PYG{n}{pilotos\PYGZus{}im} \PYG{o}{=} \PYG{n}{data\PYGZus{}im}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]}\PYG{o}{/}\PYG{n}{data\PYGZus{}im}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]}\PYG{o}{*}\PYG{l+m+mi}{0}
+    \PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{pilotos\PYGZus{}re}
+    \PYG{n}{data\PYGZus{}im}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{pilotos\PYGZus{}im}
+
+    \PYG{c+c1}{\PYGZsh{} workdir for the octave codes}
+    \PYG{n}{octave}\PYG{o}{.}\PYG{n}{addpath}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}../../../Matlab/OctaveIt\PYGZsq{}}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} octave engine runs the PRBS file }
+    \PYG{n}{goldenSignos} \PYG{o}{=} \PYG{n}{octave}\PYG{o}{.}\PYG{n}{PRBS}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{o}{*}\PYG{n}{L}\PYG{o}{+}\PYG{l+m+mi}{10}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{,:]}
+    \PYG{c+c1}{\PYGZsh{} goldenSignos = np.ones(12*L)}
+    \PYG{n}{pilotos\PYGZus{}re} \PYG{o}{=} \PYG{n}{pilotos\PYGZus{}re}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{pilotos\PYGZus{}re}\PYG{p}{)]}
+
+    \PYG{k}{await} \PYG{n}{cocotb}\PYG{o}{.}\PYG{n}{start}\PYG{p}{(}\PYG{n}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{))}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{data\PYGZus{}im}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{n}{signos}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{prbs\PYGZus{}inst}\PYG{o}{.}\PYG{n}{signo}\PYG{p}{)}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{c+c1}{\PYGZsh{} akward how it does not show errors if using for in range (fixed (\PYGZhy{}1)*piltoo \PYGZgt{}= \PYGZhy{}piloto)}
+    \PYG{c+c1}{\PYGZsh{} for i in range(200):}
+    \PYG{c+c1}{\PYGZsh{}     await RisingEdge(dut.clk)}
+    \PYG{c+c1}{\PYGZsh{}     dut.\PYGZus{}log.info(\PYGZsq{}CLK\PYGZsq{})}
+
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{k}{while} \PYG{n}{currentCycle} \PYG{o}{\PYGZlt{}} \PYG{n}{L}\PYG{o}{*}\PYG{l+m+mi}{12}\PYG{p}{:}
+        \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} dut.\PYGZus{}log.info(\PYGZdq{}CLK\PYGZdq{})}
+
+        \PYG{c+c1}{\PYGZsh{} protection, if number of pilots are exceeded}
+        \PYG{k}{if} \PYG{n}{i} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{142}\PYG{p}{:}
+            \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{142}
+        
+        \PYG{k}{if} \PYG{n}{j} \PYG{o}{\PYGZgt{}=} \PYG{n}{L}\PYG{o}{*}\PYG{l+m+mi}{12}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{j} \PYG{o}{=} \PYG{n}{L}\PYG{o}{*}\PYG{l+m+mi}{12}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+
+        \PYG{k}{if} \PYG{n}{j}\PYG{o}{\PYGZpc{}}\PYG{l+m+mi}{12} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}   
+
+            \PYG{c+c1}{\PYGZsh{} random data is generated, PRBS is applied}
+            \PYG{c+c1}{\PYGZsh{} data is generated only each 12 cycles, so pilots are only taken into account}
+            \PYG{c+c1}{\PYGZsh{} this would be a problem if FSM would not work as expected, but, as }
+            \PYG{c+c1}{\PYGZsh{} its functionability has been assured by its own verification, there is no problem}
+
+
+            \PYG{c+c1}{\PYGZsh{} piloto\PYGZus{}re = int(np.random.rand()*100*goldenSignos[i])}
+            \PYG{c+c1}{\PYGZsh{} piloto\PYGZus{}im = int(np.random.rand()*100*goldenSignos[i])}
+
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{[}\PYG{n}{j}\PYG{p}{])}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{])}
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{data\PYGZus{}im}\PYG{p}{[}\PYG{n}{j}\PYG{p}{])}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{])}
+            \PYG{n}{signos}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{prbs\PYGZus{}inst}\PYG{o}{.}\PYG{n}{signo}\PYG{p}{))}
+            \PYG{c+c1}{\PYGZsh{} print(signos)}
+
+            \PYG{c+c1}{\PYGZsh{} pilotos\PYGZus{}re.append(piloto\PYGZus{}re*goldenSignos[i])}
+            \PYG{c+c1}{\PYGZsh{} pilotos\PYGZus{}im.append(piloto\PYGZus{}im*goldenSignos[i])}
+
+            \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{[}\PYG{n}{j}\PYG{p}{])}
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{data\PYGZus{}im}\PYG{p}{[}\PYG{n}{j}\PYG{p}{])}
+
+        \PYG{c+c1}{\PYGZsh{} the try trick}
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{pass}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{))}
+            \PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{))}
+
+        \PYG{n}{j} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+    \PYG{c+c1}{\PYGZsh{} print(out\PYGZus{}re.shape)}
+    \PYG{c+c1}{\PYGZsh{} out\PYGZus{}re = np.array(fromsigned2int(np.squeeze(out\PYGZus{}re[14:]),2)*2**\PYGZhy{}0)}
+    \PYG{n}{out\PYGZus{}re} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{[}\PYG{l+m+mi}{14}\PYG{p}{:]))}
+    \PYG{n}{out\PYGZus{}im} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{out\PYGZus{}im}\PYG{p}{[}\PYG{l+m+mi}{14}\PYG{p}{:]))}
+    \PYG{c+c1}{\PYGZsh{} figs are saved, later they will be part of the artifact returned}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{o}{*}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{)}\PYG{o}{/}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{))}
+    \PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{pilotos\PYGZus{}re} 
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlim}\PYG{p}{([}\PYG{l+m+mi}{100}\PYG{p}{,}\PYG{l+m+mi}{300}\PYG{p}{])}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}imgs/eq.png\PYGZsq{}}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} signos = np.array(signos[1:])}
+
+    \PYG{n}{data\PYGZus{}re} \PYG{o}{=} \PYG{n}{data\PYGZus{}re}\PYG{p}{[:}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{14}\PYG{p}{]}
+    \PYG{n}{data\PYGZus{}im} \PYG{o}{=} \PYG{n}{data\PYGZus{}im}\PYG{p}{[:}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{14}\PYG{p}{]}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{=} \PYG{n}{out\PYGZus{}re}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{)}
+    \PYG{n}{out\PYGZus{}im\PYGZus{}norm} \PYG{o}{=} \PYG{n}{out\PYGZus{}im}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}im}\PYG{p}{)}
+    \PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{=} \PYG{n}{data\PYGZus{}re}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{)}
+    \PYG{n}{data\PYGZus{}im\PYGZus{}norm} \PYG{o}{=} \PYG{n}{data\PYGZus{}im}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}im}\PYG{p}{)}
+    \PYG{n}{out\PYGZus{}norm} \PYG{o}{=} \PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{((}\PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n}{data\PYGZus{}norm} \PYG{o}{=} \PYG{p}{(}\PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+
+    \PYG{c+c1}{\PYGZsh{} print(signos)}
+    \PYG{c+c1}{\PYGZsh{} \PYGZsh{} np.save(\PYGZsq{}sig.npy\PYGZsq{},signos)}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(np.squeeze(signos))}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(goldenSignos)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{(}\PYG{n}{skip} \PYG{o}{=} \PYG{n}{skipTest2}\PYG{p}{)}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{testReset}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+
+    \PYG{k}{global} \PYG{n}{maxCyclesMaster}\PYG{p}{,}\PYG{n}{currentCycle}
+    \PYG{n}{maxCycles} \PYG{o}{=} \PYG{n}{maxCyclesMaster}
+
+    \PYG{c+c1}{\PYGZsh{}clk refreshed}
+    \PYG{n}{currentCycle} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{n}{out\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{out\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{pilotos\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{pilotos\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+
+    \PYG{n}{octave}\PYG{o}{.}\PYG{n}{addpath}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}../../../Matlab/OctaveIt\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{goldenSignos} \PYG{o}{=} \PYG{n}{octave}\PYG{o}{.}\PYG{n}{PRBS}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{1705}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{,:]}
+
+    \PYG{k}{await} \PYG{n}{cocotb}\PYG{o}{.}\PYG{n}{start}\PYG{p}{(}\PYG{n}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{))}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{c+c1}{\PYGZsh{} akward how it does not show errors if using for in range (fixed (\PYGZhy{}1)*piltoo \PYGZgt{}= \PYGZhy{}piloto)}
+    \PYG{c+c1}{\PYGZsh{} for i in range(200):}
+    \PYG{c+c1}{\PYGZsh{}     await RisingEdge(dut.clk)}
+    \PYG{c+c1}{\PYGZsh{}     dut.\PYGZus{}log.info(\PYGZsq{}CLK\PYGZsq{})}
+
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{n}{currentCycle} \PYG{o}{\PYGZlt{}} \PYG{n}{maxCycles}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} dut.\PYGZus{}log.info(\PYGZdq{}CLK\PYGZdq{})}
+
+        \PYG{k}{if} \PYG{n}{i} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{142}\PYG{p}{:}
+            \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{142}
+
+        \PYG{k}{if} \PYG{n}{j}\PYG{o}{\PYGZpc{}}\PYG{l+m+mi}{12} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+
+            \PYG{n}{piloto\PYGZus{}re} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{rand}\PYG{p}{()}\PYG{o}{*}\PYG{l+m+mi}{200}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+            \PYG{n}{piloto\PYGZus{}im} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{rand}\PYG{p}{()}\PYG{o}{*}\PYG{l+m+mi}{200}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n}{piloto\PYGZus{}re}
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n}{piloto\PYGZus{}im}
+
+            \PYG{n}{pilotos\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{piloto\PYGZus{}re}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+            \PYG{n}{pilotos\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{piloto\PYGZus{}im}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+
+            \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{pass}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{))}
+            \PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{))}
+
+        \PYG{n}{j} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+    \PYG{c+c1}{\PYGZsh{} print(out\PYGZus{}re.shape)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{27}\PYG{p}{,(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{pilotos\PYGZus{}re}\PYG{p}{))}\PYG{o}{*}\PYG{l+m+mi}{12}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{),}\PYG{n}{pilotos\PYGZus{}re}\PYG{p}{[:}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{2}\PYG{p}{])}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}imgs/eq\PYGZus{}rst.png\PYGZsq{}}\PYG{p}{)}
+
+
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{(}\PYG{n}{skip} \PYG{o}{=} \PYG{n}{skipTest3}\PYG{p}{)}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{testVsOctaveFlatMode2}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{k}{global} \PYG{n}{maxCyclesMaster}\PYG{p}{,}\PYG{n}{currentCycle}\PYG{p}{,}\PYG{n}{useCarrierMaster}
+    
+    \PYG{c+c1}{\PYGZsh{}  mode is defined, along other parameters}
+    \PYG{n}{mode} \PYG{o}{=} \PYG{l+m+mi}{2}
+    \PYG{n}{CONSTEL} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}16QAM\PYGZsq{}}   \PYG{c+c1}{\PYGZsh{} Constelación utilizada BPSK, QPSK, 16QAM}
+    \PYG{n}{SNR} \PYG{o}{=} \PYG{l+m+mi}{60}
+    \PYG{n}{noiseON} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{canalON} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{NUM\PYGZus{}SYMB} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{SEED} \PYG{o}{=} \PYG{l+m+mi}{100}
+
+    \PYG{n}{maxCycles} \PYG{o}{=} \PYG{n}{maxCyclesMaster}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} maxCycles = 300}
+    \PYG{n}{useCarrier} \PYG{o}{=} \PYG{n}{useCarrierMaster}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}
+
+    \PYG{n}{octave}\PYG{o}{.}\PYG{n}{addpath}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}../../../Matlab/OctaveIt\PYGZsq{}}\PYG{p}{)}
+    
+    \PYG{c+c1}{\PYGZsh{} this octave/matlab code returns everything we need to compare}
+    \PYG{n}{muestras}\PYG{p}{,} \PYG{n}{hest}\PYG{p}{,} \PYG{n}{v}\PYG{p}{,} \PYG{n}{PRBS\PYGZus{}matlab}\PYG{p}{,} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{octave}\PYG{o}{.}\PYG{n}{GoldenChannelEstim}\PYG{p}{(}\PYG{n}{mode}\PYG{p}{,} \PYG{n}{CONSTEL}\PYG{p}{,} \PYG{n}{SNR}\PYG{p}{,} \PYG{n}{noiseON}\PYG{p}{,} \PYG{n}{canalON}\PYG{p}{,}\PYG{n}{NUM\PYGZus{}SYMB}\PYG{p}{,} \PYG{n}{SEED}\PYG{p}{,}\PYG{n}{nout}\PYG{o}{=}\PYG{l+m+mi}{5}\PYG{p}{)}
+    
+    \PYG{c+c1}{\PYGZsh{} bring arrays to the numpy world}
+    \PYG{n}{muestras} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}
+    \PYG{n}{hest} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{hest}\PYG{p}{)}
+    \PYG{n}{v} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{v}\PYG{p}{)}
+    \PYG{n}{PRBS\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{PRBS\PYGZus{}matlab}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{,:]}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{hest}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{v}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Shape prbs matlab\PYGZdq{}}\PYG{p}{,}\PYG{n}{PRBS\PYGZus{}matlab}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    
+    \PYG{c+c1}{\PYGZsh{} compute the scale to take benefit of the whole range.}
+    \PYG{c+c1}{\PYGZsh{} commented line was my approach, it was fine, but far from perfect, could be losing up to 2\PYGZca{}N \PYGZhy{}1 range if conditions met}
+    \PYG{c+c1}{\PYGZsh{} the used method is better, as it scales better the samples. Proposed by Elias in class.}
+    \PYG{c+c1}{\PYGZsh{} escala = 10\PYGZhy{}np.ceil(np.log2(max([max(abs(muestras.real)),max(abs(muestras.imag))]).astype(int))+1)}
+    \PYG{n}{escala} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{log2}\PYG{p}{(}\PYG{l+m+mi}{511}\PYG{o}{/}\PYG{n+nb}{max}\PYG{p}{([}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{real}\PYG{p}{)),}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{))]))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Escalado = 2**}\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{escala}\PYG{p}{))}
+    \PYG{n}{muestras} \PYG{o}{=} \PYG{n}{muestras}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{n}{escala}\PYG{p}{)}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{n}{escala}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} squeeze gets rid of the extra dimensions}
+    \PYG{n}{muestras\PYGZus{}re} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{real}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{muestras\PYGZus{}im} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{real}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+
+
+    \PYG{n}{currentCycle} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{y\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{y\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{out\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{out\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{h\PYGZus{}est\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{h\PYGZus{}est\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{pilotos\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{pilotos\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{goldenSignos} \PYG{o}{=} \PYG{n}{octave}\PYG{o}{.}\PYG{n}{PRBS}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{,:]}
+    \PYG{n}{goldenSignos} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{goldenSignos}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} Data generated, start clk}
+
+    \PYG{k}{await} \PYG{n}{cocotb}\PYG{o}{.}\PYG{n}{start}\PYG{p}{(}\PYG{n}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{))}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{c+c1}{\PYGZsh{} await RisingEdge(dut.clk)}
+
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}re.value = muestras\PYGZus{}re[0]}
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}im.value = muestras\PYGZus{}im[0]}
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}valid.value = 1}
+    \PYG{c+c1}{\PYGZsh{} dut.rst.value = 0}
+
+    \PYG{c+c1}{\PYGZsh{} akward how it does not show errors if using for in range (fixed (\PYGZhy{}1)*piltoo \PYGZgt{}= \PYGZhy{}piloto)}
+    \PYG{c+c1}{\PYGZsh{} for i in range(200):}
+    \PYG{c+c1}{\PYGZsh{}     await RisingEdge(dut.clk)}
+    \PYG{c+c1}{\PYGZsh{}     dut.\PYGZus{}log.info(\PYGZsq{}CLK\PYGZsq{})}
+
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{n}{currentCycle} \PYG{o}{\PYGZlt{}} \PYG{n}{maxCycles}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} dut.\PYGZus{}log.info(\PYGZdq{}CLK\PYGZdq{})}
+
+        \PYG{c+c1}{\PYGZsh{} more protection}
+        \PYG{k}{if} \PYG{n}{i} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{142}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{):}
+            \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{142}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+        
+        \PYG{k}{if} \PYG{n}{j} \PYG{o}{\PYGZgt{}=} \PYG{n}{useCarrier}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{j} \PYG{o}{=} \PYG{n}{useCarrier}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=}\PYG{l+m+mi}{0}
+
+        \PYG{n}{piloto\PYGZus{}re} \PYG{o}{=} \PYG{n}{muestras\PYGZus{}re}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]}
+        \PYG{n}{piloto\PYGZus{}im} \PYG{o}{=} \PYG{n}{muestras\PYGZus{}im}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]}
+
+        \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}re.value = piloto\PYGZus{}re}
+        \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}im.value = piloto\PYGZus{}im}
+
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n}{piloto\PYGZus{}re}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n}{piloto\PYGZus{}im}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+        \PYG{k}{if} \PYG{n}{j}\PYG{o}{\PYGZpc{}}\PYG{l+m+mi}{12} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+
+            \PYG{n}{pilotos\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{piloto\PYGZus{}re}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+            \PYG{n}{pilotos\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{piloto\PYGZus{}im}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+
+            \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{pass}
+        \PYG{k}{else}\PYG{p}{:}
+            
+            \PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{eq}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{eq}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{pass}
+        \PYG{k}{else}\PYG{p}{:}
+            
+            \PYG{n}{h\PYGZus{}est\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{h\PYGZus{}est\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+
+        \PYG{n}{j} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+    \PYG{c+c1}{\PYGZsh{} conversions to int}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}\PYG{o}{*}\PYG{l+m+mi}{4}\PYG{o}{/}\PYG{l+m+mi}{9}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{p}{(}\PYG{n}{escala}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{p}{))}
+    \PYG{n}{out\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{out\PYGZus{}im}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}\PYG{o}{*}\PYG{l+m+mi}{4}\PYG{o}{/}\PYG{l+m+mi}{9}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{p}{(}\PYG{n}{escala}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{p}{))}
+    \PYG{n}{h\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{h\PYGZus{}est\PYGZus{}re}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{h\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{h\PYGZus{}est\PYGZus{}im}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{y\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{y\PYGZus{}re}\PYG{p}{[:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{y\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{y\PYGZus{}im}\PYG{p}{[:}\PYG{n}{useCarrier}\PYG{p}{])}
+
+    \PYG{c+c1}{\PYGZsh{} print(out\PYGZus{}re\PYGZus{}int.shape)}
+    \PYG{c+c1}{\PYGZsh{} print(np.real(v)[:,0].shape)}
+    \PYG{c+c1}{\PYGZsh{} corr\PYGZus{}re = sum((out\PYGZus{}re\PYGZus{}int/(np.mean(out\PYGZus{}re\PYGZus{}int)))*(np.real(v)[:,0]/(np.mean(np.real(v)[:,0]))))}
+    \PYG{c+c1}{\PYGZsh{} corr\PYGZus{}im = sum((out\PYGZus{}im\PYGZus{}int/(np.mean(out\PYGZus{}im\PYGZus{}int)))*(np.imag(v)[:,0]/(np.mean(np.imag(v)[:,0]))))}
+    
+    \PYG{c+c1}{\PYGZsh{} print(out\PYGZus{}re\PYGZus{}int.shape)}
+    \PYG{c+c1}{\PYGZsh{} print(len(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re))}
+    \PYG{c+c1}{\PYGZsh{} print(NMSE(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]/norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]),out\PYGZus{}re\PYGZus{}int/norm(out\PYGZus{}re\PYGZus{}int)))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(out\PYGZus{}re\PYGZus{}int))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]))}
+    \PYG{c+c1}{\PYGZsh{} print(NMSE(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]/norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]),out\PYGZus{}im\PYGZus{}int/norm(out\PYGZus{}im\PYGZus{}int)))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(out\PYGZus{}im\PYGZus{}int))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]))}
+    \PYG{c+c1}{\PYGZsh{}TODO: bits of error}
+
+    \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}Correlación re \PYGZdq{},corr\PYGZus{}re)}
+    \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}Correlación im \PYGZdq{},corr\PYGZus{}im)}
+
+    \PYG{n}{N} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{)}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{211}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{),}\PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(y\PYGZus{}re\PYGZus{}int)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)),}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(12+3,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)\PYGZhy{}1])}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{212}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{h\PYGZus{}re\PYGZus{}int}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{),}\PYG{n}{pilotos\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{useCarrier}\PYG{o}{/}\PYG{l+m+mi}{12}\PYG{p}{)}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}parte real\PYGZdq{}}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}imgs/vsOctave2flatre.png\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{close}\PYG{p}{()}
+
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{211}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{),}\PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(y\PYGZus{}re\PYGZus{}int)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)),}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(12+3,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)\PYGZhy{}1])}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{212}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{h\PYGZus{}im\PYGZus{}int}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{),}\PYG{n}{pilotos\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{useCarrier}\PYG{o}{/}\PYG{l+m+mi}{12}\PYG{p}{)}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}parte imag\PYGZdq{}}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}imgs/vsOctave2flatim.png\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{n}{data\PYGZus{}re} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]}
+    \PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]))}  \PYG{c+c1}{\PYGZsh{} n}
+    \PYG{n}{data\PYGZus{}im} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]))} \PYG{c+c1}{\PYGZsh{} n}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{=} \PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)}
+    \PYG{n}{out\PYGZus{}im\PYGZus{}norm} \PYG{o}{=} \PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)}
+    \PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{=} \PYG{n}{data\PYGZus{}re}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{)}
+    \PYG{n}{data\PYGZus{}im\PYGZus{}norm} \PYG{o}{=} \PYG{n}{data\PYGZus{}im}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}im}\PYG{p}{)}
+    \PYG{n}{out\PYGZus{}norm} \PYG{o}{=} \PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{((}\PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n}{data\PYGZus{}norm} \PYG{o}{=} \PYG{p}{(}\PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}
+
+    \PYG{n}{NMSEcomplex} \PYG{o}{=} \PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSEcomplex}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(0,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)])}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(0,(len(pilotos\PYGZus{}re))*12,12),pilotos\PYGZus{}re)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+
+    \PYG{k}{if} \PYG{n}{NMSEcomplex} \PYG{o}{\PYGZgt{}=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{20}\PYG{p}{:}
+        \PYG{k}{raise} \PYG{n+ne}{NameError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}El error es mayor que el límite establecido, }\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{ \PYGZgt{} \PYGZhy{}20 dB\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n}{NMSEcomplex}\PYG{p}{)}
+
+
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{(}\PYG{n}{skip} \PYG{o}{=} \PYG{n}{skipTest4}\PYG{p}{)}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{testVsOctaveMode2}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{k}{global} \PYG{n}{maxCyclesMaster}\PYG{p}{,}\PYG{n}{currentCycle}\PYG{p}{,}\PYG{n}{useCarrierMaster}
+    
+    \PYG{c+c1}{\PYGZsh{}  mode is defined, along other parameters}
+    \PYG{n}{mode} \PYG{o}{=} \PYG{l+m+mi}{2}
+    \PYG{n}{CONSTEL} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}16QAM\PYGZsq{}}   \PYG{c+c1}{\PYGZsh{} Constelación utilizada BPSK, QPSK, 16QAM}
+    \PYG{n}{SNR} \PYG{o}{=} \PYG{l+m+mi}{60}
+    \PYG{n}{noiseON} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{canalON} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{NUM\PYGZus{}SYMB} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{SEED} \PYG{o}{=} \PYG{l+m+mi}{100}
+
+    \PYG{n}{maxCycles} \PYG{o}{=} \PYG{n}{maxCyclesMaster}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} maxCycles = 1300}
+    \PYG{n}{useCarrier} \PYG{o}{=} \PYG{n}{useCarrierMaster}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}
+
+    \PYG{n}{octave}\PYG{o}{.}\PYG{n}{addpath}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}../../../Matlab/OctaveIt\PYGZsq{}}\PYG{p}{)}
+    
+    \PYG{c+c1}{\PYGZsh{} this octave/matlab code returns everything we need to compare}
+    \PYG{n}{muestras}\PYG{p}{,} \PYG{n}{hest}\PYG{p}{,} \PYG{n}{v}\PYG{p}{,} \PYG{n}{PRBS\PYGZus{}matlab}\PYG{p}{,} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{octave}\PYG{o}{.}\PYG{n}{GoldenChannelEstim}\PYG{p}{(}\PYG{n}{mode}\PYG{p}{,} \PYG{n}{CONSTEL}\PYG{p}{,} \PYG{n}{SNR}\PYG{p}{,} \PYG{n}{noiseON}\PYG{p}{,} \PYG{n}{canalON}\PYG{p}{,}\PYG{n}{NUM\PYGZus{}SYMB}\PYG{p}{,} \PYG{n}{SEED}\PYG{p}{,}\PYG{n}{nout}\PYG{o}{=}\PYG{l+m+mi}{5}\PYG{p}{)}
+    
+    \PYG{c+c1}{\PYGZsh{} bring arrays to the numpy world}
+    \PYG{n}{muestras} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}
+    \PYG{n}{hest} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{hest}\PYG{p}{)}
+    \PYG{n}{v} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{v}\PYG{p}{)}
+    \PYG{n}{PRBS\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{PRBS\PYGZus{}matlab}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{,:]}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{hest}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{v}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Shape prbs matlab\PYGZdq{}}\PYG{p}{,}\PYG{n}{PRBS\PYGZus{}matlab}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    
+    \PYG{c+c1}{\PYGZsh{} compute the scale to take benefit of the whole range.}
+    \PYG{c+c1}{\PYGZsh{} commented line was my approach, it was fine, but far from perfect, could be losing up to 2\PYGZca{}N \PYGZhy{}1 range if conditions met}
+    \PYG{c+c1}{\PYGZsh{} the used method is better, as it scales better the samples. Proposed by Elias in class.}
+    \PYG{c+c1}{\PYGZsh{} escala = 10\PYGZhy{}np.ceil(np.log2(max([max(abs(muestras.real)),max(abs(muestras.imag))]).astype(int))+1)}
+    \PYG{n}{escala} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{log2}\PYG{p}{(}\PYG{l+m+mi}{511}\PYG{o}{/}\PYG{n+nb}{max}\PYG{p}{([}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{real}\PYG{p}{)),}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{))]))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Escalado = 2**}\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{escala}\PYG{p}{))}
+    \PYG{n}{muestras} \PYG{o}{=} \PYG{n}{muestras}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{n}{escala}\PYG{p}{)}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{n}{escala}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} squeeze gets rid of the extra dimensions}
+    \PYG{n}{muestras\PYGZus{}re} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{real}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{muestras\PYGZus{}im} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{real}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+
+
+    \PYG{n}{currentCycle} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{y\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{y\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{out\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{out\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{h\PYGZus{}est\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{h\PYGZus{}est\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{pilotos\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{pilotos\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{goldenSignos} \PYG{o}{=} \PYG{n}{octave}\PYG{o}{.}\PYG{n}{PRBS}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{,:]}
+    \PYG{n}{goldenSignos} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{goldenSignos}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} Data generated, start clk}
+
+    \PYG{k}{await} \PYG{n}{cocotb}\PYG{o}{.}\PYG{n}{start}\PYG{p}{(}\PYG{n}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{))}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{c+c1}{\PYGZsh{} await RisingEdge(dut.clk)}
+
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}re.value = muestras\PYGZus{}re[0]}
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}im.value = muestras\PYGZus{}im[0]}
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}valid.value = 1}
+    \PYG{c+c1}{\PYGZsh{} dut.rst.value = 0}
+
+    \PYG{c+c1}{\PYGZsh{} akward how it does not show errors if using for in range (fixed (\PYGZhy{}1)*piltoo \PYGZgt{}= \PYGZhy{}piloto)}
+    \PYG{c+c1}{\PYGZsh{} for i in range(200):}
+    \PYG{c+c1}{\PYGZsh{}     await RisingEdge(dut.clk)}
+    \PYG{c+c1}{\PYGZsh{}     dut.\PYGZus{}log.info(\PYGZsq{}CLK\PYGZsq{})}
+
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{n}{currentCycle} \PYG{o}{\PYGZlt{}} \PYG{n}{maxCycles}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} dut.\PYGZus{}log.info(\PYGZdq{}CLK\PYGZdq{})}
+
+        \PYG{c+c1}{\PYGZsh{} more protection}
+        \PYG{k}{if} \PYG{n}{i} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{142}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{):}
+            \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{142}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+        
+        \PYG{k}{if} \PYG{n}{j} \PYG{o}{\PYGZgt{}=} \PYG{n}{useCarrier}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{j} \PYG{o}{=} \PYG{n}{useCarrier}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=}\PYG{l+m+mi}{0}
+
+        \PYG{n}{piloto\PYGZus{}re} \PYG{o}{=} \PYG{n}{muestras\PYGZus{}re}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]}
+        \PYG{n}{piloto\PYGZus{}im} \PYG{o}{=} \PYG{n}{muestras\PYGZus{}im}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]}
+
+        \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}re.value = piloto\PYGZus{}re}
+        \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}im.value = piloto\PYGZus{}im}
+
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n}{piloto\PYGZus{}re}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n}{piloto\PYGZus{}im}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+        \PYG{k}{if} \PYG{n}{j}\PYG{o}{\PYGZpc{}}\PYG{l+m+mi}{12} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+
+            \PYG{n}{pilotos\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{piloto\PYGZus{}re}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+            \PYG{n}{pilotos\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{piloto\PYGZus{}im}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+
+            \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{pass}
+        \PYG{k}{else}\PYG{p}{:}
+            
+            \PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{eq}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{eq}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{pass}
+        \PYG{k}{else}\PYG{p}{:}
+            
+            \PYG{n}{h\PYGZus{}est\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{h\PYGZus{}est\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+
+        \PYG{n}{j} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+    \PYG{c+c1}{\PYGZsh{} conversions to int}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}\PYG{o}{*}\PYG{l+m+mi}{4}\PYG{o}{/}\PYG{l+m+mi}{9}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{p}{(}\PYG{n}{escala}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{p}{))}
+    \PYG{n}{out\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{out\PYGZus{}im}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}\PYG{o}{*}\PYG{l+m+mi}{4}\PYG{o}{/}\PYG{l+m+mi}{9}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{p}{(}\PYG{n}{escala}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{p}{))}
+    \PYG{n}{h\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{h\PYGZus{}est\PYGZus{}re}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{h\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{h\PYGZus{}est\PYGZus{}im}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{y\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{y\PYGZus{}re}\PYG{p}{[:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{y\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{y\PYGZus{}im}\PYG{p}{[:}\PYG{n}{useCarrier}\PYG{p}{])}
+
+    \PYG{c+c1}{\PYGZsh{} print(out\PYGZus{}re\PYGZus{}int.shape)}
+    \PYG{c+c1}{\PYGZsh{} print(np.real(v)[:,0].shape)}
+    \PYG{c+c1}{\PYGZsh{} corr\PYGZus{}re = sum((out\PYGZus{}re\PYGZus{}int/(np.mean(out\PYGZus{}re\PYGZus{}int)))*(np.real(v)[:,0]/(np.mean(np.real(v)[:,0]))))}
+    \PYG{c+c1}{\PYGZsh{} corr\PYGZus{}im = sum((out\PYGZus{}im\PYGZus{}int/(np.mean(out\PYGZus{}im\PYGZus{}int)))*(np.imag(v)[:,0]/(np.mean(np.imag(v)[:,0]))))}
+    
+    \PYG{c+c1}{\PYGZsh{} print(out\PYGZus{}re\PYGZus{}int.shape)}
+    \PYG{c+c1}{\PYGZsh{} print(len(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re))}
+    \PYG{c+c1}{\PYGZsh{} print(NMSE(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]/norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]),out\PYGZus{}re\PYGZus{}int/norm(out\PYGZus{}re\PYGZus{}int)))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(out\PYGZus{}re\PYGZus{}int))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]))}
+    \PYG{c+c1}{\PYGZsh{} print(NMSE(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]/norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]),out\PYGZus{}im\PYGZus{}int/norm(out\PYGZus{}im\PYGZus{}int)))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(out\PYGZus{}im\PYGZus{}int))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]))}
+    \PYG{c+c1}{\PYGZsh{}TODO: bits of error}
+
+    \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}Correlación re \PYGZdq{},corr\PYGZus{}re)}
+    \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}Correlación im \PYGZdq{},corr\PYGZus{}im)}
+
+    \PYG{n}{N} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{)}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{211}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{),}\PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(y\PYGZus{}re\PYGZus{}int)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)),}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(12+3,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)\PYGZhy{}1])}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{212}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{h\PYGZus{}re\PYGZus{}int}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{),}\PYG{n}{pilotos\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{useCarrier}\PYG{o}{/}\PYG{l+m+mi}{12}\PYG{p}{)}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}parte real\PYGZdq{}}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}imgs/vsOctave2re.png\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{211}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{),}\PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(y\PYGZus{}re\PYGZus{}int)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)),}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(12+3,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)\PYGZhy{}1])}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{212}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{h\PYGZus{}im\PYGZus{}int}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{),}\PYG{n}{pilotos\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{useCarrier}\PYG{o}{/}\PYG{l+m+mi}{12}\PYG{p}{)}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}parte imag\PYGZdq{}}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}imgs/vsOctave2im.png\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{n}{data\PYGZus{}re} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]}
+    \PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]))}  \PYG{c+c1}{\PYGZsh{} n}
+    \PYG{n}{data\PYGZus{}im} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]))} \PYG{c+c1}{\PYGZsh{} n}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{=} \PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)}
+    \PYG{n}{out\PYGZus{}im\PYGZus{}norm} \PYG{o}{=} \PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)}
+    \PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{=} \PYG{n}{data\PYGZus{}re}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{)}
+    \PYG{n}{data\PYGZus{}im\PYGZus{}norm} \PYG{o}{=} \PYG{n}{data\PYGZus{}im}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}im}\PYG{p}{)}
+    \PYG{n}{out\PYGZus{}norm} \PYG{o}{=} \PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{((}\PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n}{data\PYGZus{}norm} \PYG{o}{=} \PYG{p}{(}\PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}
+
+    \PYG{n}{NMSEcomplex} \PYG{o}{=} \PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSEcomplex}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(0,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)])}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(0,(len(pilotos\PYGZus{}re))*12,12),pilotos\PYGZus{}re)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+
+    \PYG{k}{if} \PYG{n}{NMSEcomplex} \PYG{o}{\PYGZgt{}=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{20}\PYG{p}{:}
+        \PYG{k}{raise} \PYG{n+ne}{NameError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}El error es mayor que el límite establecido, }\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{ \PYGZgt{} \PYGZhy{}20 dB\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n}{NMSEcomplex}\PYG{p}{)}
+
+
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{(}\PYG{n}{skip} \PYG{o}{=} \PYG{n}{skipTest5}\PYG{p}{)}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{testVsOctaveMode8}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{k}{global} \PYG{n}{maxCyclesMaster}\PYG{p}{,}\PYG{n}{currentCycle}\PYG{p}{,}\PYG{n}{useCarrierMaster}
+
+    \PYG{c+c1}{\PYGZsh{} use mode 8}
+    \PYG{n}{mode} \PYG{o}{=} \PYG{l+m+mi}{8}
+    \PYG{n}{CONSTEL} \PYG{o}{=} \PYG{l+s+s1}{\PYGZsq{}16QAM\PYGZsq{}}   \PYG{c+c1}{\PYGZsh{} Constelación utilizada BPSK, QPSK, 16QAM}
+    \PYG{n}{SNR} \PYG{o}{=} \PYG{l+m+mi}{60}
+    \PYG{n}{noiseON} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{canalON} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{NUM\PYGZus{}SYMB} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{SEED} \PYG{o}{=} \PYG{l+m+mi}{100}
+
+    \PYG{n}{maxCycles} \PYG{o}{=} \PYG{n}{maxCyclesMaster}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}
+    \PYG{n}{maxCyclesMaster} \PYG{o}{=} \PYG{n}{maxCyclesMaster}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}
+    \PYG{n}{useCarrier} \PYG{o}{=} \PYG{n}{useCarrierMaster}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}
+
+    \PYG{n}{octave}\PYG{o}{.}\PYG{n}{addpath}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}../../../Matlab/OctaveIt\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{muestras}\PYG{p}{,} \PYG{n}{hest}\PYG{p}{,} \PYG{n}{v}\PYG{p}{,} \PYG{n}{PRBS\PYGZus{}matlab}\PYG{p}{,} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{octave}\PYG{o}{.}\PYG{n}{GoldenChannelEstim}\PYG{p}{(}\PYG{n}{mode}\PYG{p}{,} \PYG{n}{CONSTEL}\PYG{p}{,} \PYG{n}{SNR}\PYG{p}{,} \PYG{n}{noiseON}\PYG{p}{,} \PYG{n}{canalON}\PYG{p}{,}\PYG{n}{NUM\PYGZus{}SYMB}\PYG{p}{,} \PYG{n}{SEED}\PYG{p}{,}\PYG{n}{nout}\PYG{o}{=}\PYG{l+m+mi}{5}\PYG{p}{)}
+    
+    \PYG{n}{muestras} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}
+    \PYG{n}{hest} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{hest}\PYG{p}{)}
+    \PYG{n}{v} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{v}\PYG{p}{)}
+    \PYG{n}{PRBS\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{PRBS\PYGZus{}matlab}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{,:]}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{hest}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{v}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Shape prbs matlab\PYGZdq{}}\PYG{p}{,}\PYG{n}{PRBS\PYGZus{}matlab}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+    
+    \PYG{c+c1}{\PYGZsh{} escala = 10\PYGZhy{}np.ceil(np.log2(max([max(abs(muestras.real)),max(abs(muestras.imag))]).astype(int))+1)}
+    \PYG{n}{escala} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{log2}\PYG{p}{(}\PYG{l+m+mi}{511}\PYG{o}{/}\PYG{n+nb}{max}\PYG{p}{([}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{real}\PYG{p}{)),}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{muestras}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{))]))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Escalado = 2**}\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{escala}\PYG{p}{))}
+    \PYG{n}{muestras} \PYG{o}{=} \PYG{n}{muestras}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{n}{escala}\PYG{p}{)}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{n}{escala}\PYG{p}{)}
+    
+    \PYG{n}{muestras\PYGZus{}re} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{real}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{muestras\PYGZus{}im} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{(}\PYG{n}{muestras}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{real}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+    \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{imag}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab}\PYG{p}{)}\PYG{o}{.}\PYG{n}{astype}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{))}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+
+
+    \PYG{n}{currentCycle} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{y\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{y\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{out\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{out\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{h\PYGZus{}est\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{h\PYGZus{}est\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{pilotos\PYGZus{}re} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{pilotos\PYGZus{}im} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{goldenSignos} \PYG{o}{=} \PYG{n}{octave}\PYG{o}{.}\PYG{n}{PRBS}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{,:]}
+    \PYG{n}{goldenSignos} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{goldenSignos}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} Data generated, start clk}
+
+    \PYG{k}{await} \PYG{n}{cocotb}\PYG{o}{.}\PYG{n}{start}\PYG{p}{(}\PYG{n}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{))}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{c+c1}{\PYGZsh{} await RisingEdge(dut.clk)}
+
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}re.value = muestras\PYGZus{}re[0]}
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}im.value = muestras\PYGZus{}im[0]}
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}valid.value = 1}
+    \PYG{c+c1}{\PYGZsh{} dut.rst.value = 0}
+
+    \PYG{c+c1}{\PYGZsh{} akward how it does not show errors if using for in range (fixed (\PYGZhy{}1)*piltoo \PYGZgt{}= \PYGZhy{}piloto)}
+    \PYG{c+c1}{\PYGZsh{} for i in range(200):}
+    \PYG{c+c1}{\PYGZsh{}     await RisingEdge(dut.clk)}
+    \PYG{c+c1}{\PYGZsh{}     dut.\PYGZus{}log.info(\PYGZsq{}CLK\PYGZsq{})}
+
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{j} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{n}{currentCycle} \PYG{o}{\PYGZlt{}} \PYG{n}{maxCycles}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} dut.\PYGZus{}log.info(\PYGZdq{}CLK\PYGZdq{})}
+
+        \PYG{k}{if} \PYG{n}{i} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{142}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{):}
+            \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{142}\PYG{o}{*}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{mode}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+
+        \PYG{k}{if} \PYG{n}{j} \PYG{o}{\PYGZgt{}=} \PYG{n}{useCarrier}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{j} \PYG{o}{=} \PYG{n}{useCarrier}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+            \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+        \PYG{n}{piloto\PYGZus{}re} \PYG{o}{=} \PYG{n}{muestras\PYGZus{}re}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]}
+        \PYG{n}{piloto\PYGZus{}im} \PYG{o}{=} \PYG{n}{muestras\PYGZus{}im}\PYG{p}{[}\PYG{n}{j}\PYG{p}{]}
+
+        \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}re.value = piloto\PYGZus{}re}
+        \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}im.value = piloto\PYGZus{}im}
+
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n}{piloto\PYGZus{}re}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{n}{piloto\PYGZus{}im}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+        \PYG{k}{if} \PYG{n}{j}\PYG{o}{\PYGZpc{}}\PYG{l+m+mi}{12} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+
+            \PYG{n}{pilotos\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{piloto\PYGZus{}re}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+            \PYG{n}{pilotos\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{piloto\PYGZus{}im}\PYG{o}{*}\PYG{n}{goldenSignos}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+
+            \PYG{n}{i} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{pass}
+        \PYG{k}{else}\PYG{p}{:}
+            
+            \PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{eq}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{eq}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{except}\PYG{p}{:}
+            \PYG{k}{pass}
+        \PYG{k}{else}\PYG{p}{:}
+            
+            \PYG{n}{h\PYGZus{}est\PYGZus{}re}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{h\PYGZus{}est\PYGZus{}im}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{estimador}\PYG{o}{.}\PYG{n}{out\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+
+        \PYG{n}{j} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+   \PYG{c+c1}{\PYGZsh{} conversions to int}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}\PYG{o}{*}\PYG{l+m+mi}{4}\PYG{o}{/}\PYG{l+m+mi}{9}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{p}{(}\PYG{n}{escala}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{p}{))}
+    \PYG{n}{out\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{out\PYGZus{}im}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}\PYG{o}{*}\PYG{l+m+mi}{4}\PYG{o}{/}\PYG{l+m+mi}{9}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{p}{(}\PYG{n}{escala}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{3}\PYG{p}{))}
+    \PYG{n}{h\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{h\PYGZus{}est\PYGZus{}re}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{h\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{h\PYGZus{}est\PYGZus{}im}\PYG{p}{[}\PYG{l+m+mi}{15}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{y\PYGZus{}re\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{y\PYGZus{}re}\PYG{p}{[:}\PYG{n}{useCarrier}\PYG{p}{])}
+    \PYG{n}{y\PYGZus{}im\PYGZus{}int} \PYG{o}{=} \PYG{n}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{y\PYGZus{}im}\PYG{p}{[:}\PYG{n}{useCarrier}\PYG{p}{])}
+
+    \PYG{c+c1}{\PYGZsh{} print(out\PYGZus{}re\PYGZus{}int.shape)}
+    \PYG{c+c1}{\PYGZsh{} print(np.real(v)[:,0].shape)}
+    \PYG{c+c1}{\PYGZsh{} corr\PYGZus{}re = sum((out\PYGZus{}re\PYGZus{}int[3:]/(np.mean(out\PYGZus{}re\PYGZus{}int)))*(np.real(v)[:,0]/(np.mean(np.real(v)[:,0]))))}
+    \PYG{c+c1}{\PYGZsh{} corr\PYGZus{}im = sum((out\PYGZus{}im\PYGZus{}int[3:]/(np.mean(out\PYGZus{}im\PYGZus{}int)))*(np.imag(v)[:,0]/(np.mean(np.imag(v)[:,0]))))}
+    \PYG{c+c1}{\PYGZsh{} print(out\PYGZus{}re\PYGZus{}int.shape)}
+    \PYG{c+c1}{\PYGZsh{} print(len(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re))}
+    \PYG{c+c1}{\PYGZsh{} print(NMSE(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]/norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]),out\PYGZus{}re\PYGZus{}int/norm(out\PYGZus{}re\PYGZus{}int)))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(out\PYGZus{}re\PYGZus{}int))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re[:len(out\PYGZus{}re\PYGZus{}int)]))}
+    \PYG{c+c1}{\PYGZsh{} print(NMSE(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]/norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]),out\PYGZus{}im\PYGZus{}int/norm(out\PYGZus{}im\PYGZus{}int)))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(out\PYGZus{}im\PYGZus{}int))}
+    \PYG{c+c1}{\PYGZsh{} print(norm(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im[:len(out\PYGZus{}im\PYGZus{}int)]))}
+
+    \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}Correlación re \PYGZdq{},corr\PYGZus{}re)}
+    \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}Correlación im \PYGZdq{},corr\PYGZus{}im)}
+
+    \PYG{n}{N} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{squeeze}\PYG{p}{(}\PYG{n}{out\PYGZus{}re}\PYG{p}{)}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{211}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{),}\PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(y\PYGZus{}re\PYGZus{}int)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)),}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(12+3,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)\PYGZhy{}1])}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{212}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{h\PYGZus{}re\PYGZus{}int}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{),}\PYG{n}{pilotos\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{useCarrier}\PYG{o}{/}\PYG{l+m+mi}{12}\PYG{p}{)}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}parte real\PYGZdq{}}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}imgs/vsOctave8re.png\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{211}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{),}\PYG{n}{linewidth}\PYG{o}{=}\PYG{l+m+mi}{3}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(y\PYGZus{}re\PYGZus{}int)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)),}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(12+3,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)\PYGZhy{}1])}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{subplot}\PYG{p}{(}\PYG{l+m+mi}{212}\PYG{p}{)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{h\PYGZus{}im\PYGZus{}int}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} add 3 bc of the delays of the system}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n}{useCarrier}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{),}\PYG{n}{pilotos\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{useCarrier}\PYG{o}{/}\PYG{l+m+mi}{12}\PYG{p}{)}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{c+c1}{\PYGZsh{} plt.plot(ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im)}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{title}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}parte imag\PYGZdq{}}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+    \PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}imgs/vsOctave8im.png\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{n}{data\PYGZus{}re} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}re}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)]}
+    \PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]))}  \PYG{c+c1}{\PYGZsh{} n}
+    \PYG{n}{data\PYGZus{}im} \PYG{o}{=} \PYG{n}{ofdm\PYGZus{}eq\PYGZus{}matlab\PYGZus{}im}\PYG{p}{[:}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)]}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{zeros}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{[::}\PYG{l+m+mi}{12}\PYG{p}{]))} \PYG{c+c1}{\PYGZsh{} n}
+    \PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{=} \PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}int}\PYG{p}{)}
+    \PYG{n}{out\PYGZus{}im\PYGZus{}norm} \PYG{o}{=} \PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}int}\PYG{p}{)}
+    \PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{=} \PYG{n}{data\PYGZus{}re}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}re}\PYG{p}{)}
+    \PYG{n}{data\PYGZus{}im\PYGZus{}norm} \PYG{o}{=} \PYG{n}{data\PYGZus{}im}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}im}\PYG{p}{)}
+    \PYG{n}{out\PYGZus{}norm} \PYG{o}{=} \PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{((}\PYG{n}{out\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n}{data\PYGZus{}norm} \PYG{o}{=} \PYG{p}{(}\PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}\PYG{o}{/}\PYG{n}{norm}\PYG{p}{(}\PYG{n}{data\PYGZus{}re\PYGZus{}norm} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{n}{j}\PYG{o}{*}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{)}
+
+    \PYG{n}{NMSEcomplex} \PYG{o}{=} \PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE real flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}re\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}re\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE imag flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}im\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}im\PYGZus{}norm}\PYG{p}{))}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NMSE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{NMSEcomplex}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}RMSE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{RMSE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}MAE complex flat :\PYGZdq{}}\PYG{p}{,}\PYG{n}{MAE}\PYG{p}{(}\PYG{n}{out\PYGZus{}norm}\PYG{p}{,}\PYG{n}{data\PYGZus{}norm}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(0,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)])}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(0,(len(pilotos\PYGZus{}re))*12,12),pilotos\PYGZus{}re)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+
+    \PYG{k}{if} \PYG{n}{NMSEcomplex} \PYG{o}{\PYGZgt{}=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{20}\PYG{p}{:}
+        \PYG{k}{raise} \PYG{n+ne}{NameError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}El error es mayor que el límite establecido, }\PYG{l+s+si}{\PYGZpc{}d}\PYG{l+s+s2}{ \PYGZgt{} \PYGZhy{}20 dB\PYGZdq{}} \PYG{o}{\PYGZpc{}} \PYG{n}{NMSEcomplex}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(0,(len(pilotos\PYGZus{}re))*12,12),PRBS\PYGZus{}matlab[:len(pilotos\PYGZus{}re)])}
+    \PYG{c+c1}{\PYGZsh{} plt.stem(np.arange(0,(len(pilotos\PYGZus{}re))*12,12),pilotos\PYGZus{}re)}
+    \PYG{c+c1}{\PYGZsh{} plt.show()}
+\end{Verbatim}

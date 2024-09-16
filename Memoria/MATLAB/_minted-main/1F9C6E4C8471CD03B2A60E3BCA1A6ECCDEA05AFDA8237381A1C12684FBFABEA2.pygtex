@@ -1,0 +1,17 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{function}\PYG{+w}{ }pilotos\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nf}{PRBS}\PYG{p}{(}NUM\PYGZus{}SYMB,useCarrier\PYG{p}{)}
+\PYG{+w}{    }\PYG{n}{pilotsLoc}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{l+m+mi}{12}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{PRBSvar}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{ones}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{11}\PYG{p}{);}
+\PYG{+w}{    }\PYG{n}{pilotos}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{[];}
+\PYG{+w}{    }\PYG{n}{limit}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{length}\PYG{p}{(}\PYG{n}{pilotsLoc}\PYG{p}{)}\PYG{o}{*}\PYG{n}{NUM\PYGZus{}SYMB}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{for}\PYG{+w}{ }\PYG{n+nb}{i}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{:(}\PYG{n}{limit}\PYG{p}{)}
+\PYG{+w}{        }\PYG{n}{cuenta}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{xor}\PYG{p}{(}\PYG{n}{PRBSvar}\PYG{p}{(}\PYG{k}{end}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{2}\PYG{p}{),}\PYG{+w}{ }\PYG{n}{PRBSvar}\PYG{p}{(}\PYG{k}{end}\PYG{p}{));}
+\PYG{+w}{        }\PYG{n}{Salida}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{PRBSvar}\PYG{p}{(}\PYG{k}{end}\PYG{p}{);}\PYG{+w}{ }
+\PYG{+w}{        }\PYG{n}{PRBSvar}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{circshift}\PYG{p}{(}\PYG{n}{PRBSvar}\PYG{p}{,}\PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{PRBSvar}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{cuenta}\PYG{p}{;}
+\PYG{+w}{        }\PYG{n}{pilotos}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{[}\PYG{n}{pilotos}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{Salida}\PYG{p}{];}
+\PYG{+w}{    }\PYG{k}{end}
+\PYG{+w}{    }\PYG{n}{pilotos}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{pilotos}\PYG{o}{\PYGZhy{}}\PYG{l+m+mf}{0.5}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{p}{;}
+\PYG{+w}{    }
+\PYG{k}{end}\PYG{+w}{ }
+\end{Verbatim}

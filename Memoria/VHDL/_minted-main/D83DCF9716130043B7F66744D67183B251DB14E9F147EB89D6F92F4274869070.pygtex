@@ -1,0 +1,93 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{library}\PYG{+w}{ }\PYG{n+nn}{ieee}\PYG{p}{;}
+\PYG{k}{use}\PYG{+w}{ }\PYG{n+nn}{ieee.std\PYGZus{}logic\PYGZus{}1164.}\PYG{k}{all}\PYG{p}{;}
+\PYG{k}{use}\PYG{+w}{ }\PYG{n+nn}{ieee.numeric\PYGZus{}std.}\PYG{k}{all}\PYG{p}{;}
+
+\PYG{k}{entity}\PYG{+w}{ }\PYG{n+nc}{eq}\PYG{+w}{ }\PYG{k}{is}
+\PYG{+w}{    }\PYG{k}{port}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{clk}\PYG{+w}{   }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+\PYG{+w}{        }\PYG{n}{rst}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+\PYG{+w}{        }\PYG{n}{h\PYGZus{}re}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{h\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}re}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{valid}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+
+\PYG{+w}{        }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} output is the x with the channel effects reverted}
+\PYG{+w}{        }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} size of output is too large, in future updates should consider using a smaller vector, maximizing range usage}
+\PYG{+w}{        }\PYG{n}{x\PYGZus{}eq\PYGZus{}re}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{out}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{31}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{x\PYGZus{}eq\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{out}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{31}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{eq\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{out}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}
+\PYG{+w}{    }\PYG{p}{);}
+\PYG{k}{end}\PYG{+w}{ }\PYG{k}{entity}\PYG{p}{;}
+
+\PYG{k}{architecture}\PYG{+w}{ }\PYG{n+nc}{arch\PYGZus{}eq}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n+nc}{eq}\PYG{+w}{ }\PYG{k}{is}
+
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{conj\PYGZus{}h\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{divisor}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{19}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{div\PYGZus{}re}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{div\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{  }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{sq\PYGZus{}y\PYGZus{}re}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{sq\PYGZus{}y\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{19}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{sq\PYGZus{}y\PYGZus{}im\PYGZus{}trunc}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{sq\PYGZus{}y\PYGZus{}re\PYGZus{}trunc}\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{num\PYGZus{}re}\PYG{p}{,}\PYG{n}{num\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{19}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{num\PYGZus{}re\PYGZus{}long}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{num\PYGZus{}im\PYGZus{}long}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{31}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{:=}\PYG{+w}{ }\PYG{p}{(}\PYG{k}{others}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}0\PYGZsq{}}\PYG{p}{);}\PYG{+w}{ }
+\PYG{+w}{    }
+\PYG{+w}{    }
+\PYG{k}{begin}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} much past code is commented below, even if this is the final version, i like keeping old strats on how to approach the problem around, you never know when it may come handy}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} tho, some cleaning would be nice}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} valid signal connected through th block}
+\PYG{+w}{    }\PYG{n}{eq\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{valid}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} y\PYGZus{}re\PYGZus{}delayed should be very delayed (future me: not that delayed, just three cycles if comb eq)}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} squared abs of estimated channel}
+\PYG{+w}{    }\PYG{n}{sq\PYGZus{}y\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{h\PYGZus{}re}\PYG{o}{*}\PYG{n}{h\PYGZus{}re}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{sq\PYGZus{}y\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{h\PYGZus{}im}\PYG{o}{*}\PYG{n}{h\PYGZus{}im}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} embarrasing workaround, dangerous if sq\PYGZus{}y\PYGZus{}re and sq\PYGZus{}y\PYGZus{}im take its max values, safe any other case}
+\PYG{+w}{    }\PYG{n}{divisor}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{sq\PYGZus{}y\PYGZus{}re}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{sq\PYGZus{}y\PYGZus{}im}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{to\PYGZus{}signed}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n}{divisor}\PYG{n+na}{\PYGZsq{}length}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} applying complex multiplication formulae, in this case (a+b*i)*(c\PYGZhy{}d*i) = (e +f*i)}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} e = a*c + b*d}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} f = b*c \PYGZhy{} a*d}
+\PYG{+w}{    }\PYG{n}{num\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{h\PYGZus{}re}\PYG{o}{*}\PYG{n}{y\PYGZus{}re}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{y\PYGZus{}im}\PYG{o}{*}\PYG{n}{h\PYGZus{}im}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{num\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{y\PYGZus{}re}\PYG{o}{*}\PYG{n}{h\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZhy{}}\PYG{+w}{ }\PYG{n}{y\PYGZus{}im}\PYG{o}{*}\PYG{n}{h\PYGZus{}re}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} aplying scale of 2¹² bits, maybe too much...}
+\PYG{+w}{    }\PYG{n}{num\PYGZus{}re\PYGZus{}long}\PYG{p}{(}\PYG{l+m+mi}{31}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{12}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{num\PYGZus{}re}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{num\PYGZus{}im\PYGZus{}long}\PYG{p}{(}\PYG{l+m+mi}{31}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{12}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{num\PYGZus{}im}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} comb division, unadvised because large area usage. }
+\PYG{+w}{    }\PYG{n}{x\PYGZus{}eq\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{num\PYGZus{}re\PYGZus{}long}\PYG{o}{/}\PYG{n}{divisor}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{x\PYGZus{}eq\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{num\PYGZus{}im\PYGZus{}long}\PYG{o}{/}\PYG{n}{divisor}\PYG{p}{;}
+
+\PYG{+w}{    }
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} conj\PYGZus{}h\PYGZus{}im \PYGZlt{}= \PYGZhy{}h\PYGZus{}im;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} \PYGZhy{}\PYGZhy{} sq\PYGZus{}y\PYGZus{}re\PYGZus{}trunc \PYGZlt{}= if sq\PYGZus{}y\PYGZus{}re(19 downto 10) = (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{}) then (0 =\PYGZgt{} \PYGZsq{}1\PYGZsq{}, (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{})) else sq\PYGZus{}y\PYGZus{}re(19 downto 10);}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} \PYGZhy{}\PYGZhy{} sq\PYGZus{}y\PYGZus{}im\PYGZus{}trunc \PYGZlt{}= if sq\PYGZus{}y\PYGZus{}im(19 downto 10) = (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{}) then (0 =\PYGZgt{} \PYGZsq{}1\PYGZsq{}, (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{})) else sq\PYGZus{}y\PYGZus{}im(19 downto 10);}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} with sq\PYGZus{}y\PYGZus{}re(19 downto 10) select}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}     sq\PYGZus{}y\PYGZus{}re\PYGZus{}trunc \PYGZlt{}= \PYGZdq{}0000000001\PYGZdq{} when (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{}), }
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}                     sq\PYGZus{}y\PYGZus{}re(19 downto 10) when others;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} with sq\PYGZus{}y\PYGZus{}im(19 downto 10) select}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}     sq\PYGZus{}y\PYGZus{}im\PYGZus{}trunc \PYGZlt{}= \PYGZdq{}0000000001\PYGZdq{} when (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{}), }
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}                     sq\PYGZus{}y\PYGZus{}im(19 downto 10) when others;}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} divisor \PYGZlt{}= sq\PYGZus{}y\PYGZus{}re\PYGZus{}trunc + sq\PYGZus{}y\PYGZus{}im\PYGZus{}trunc;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} \PYGZhy{}\PYGZhy{} div\PYGZus{}re2 \PYGZlt{}= h\PYGZus{}re/divisor2;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} \PYGZhy{}\PYGZhy{} div\PYGZus{}im2 \PYGZlt{}= conj\PYGZus{}h\PYGZus{}im/divisor2;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} div\PYGZus{}re \PYGZlt{}= h\PYGZus{}re/divisor;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} div\PYGZus{}im \PYGZlt{}= conj\PYGZus{}h\PYGZus{}im/divisor;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} x\PYGZus{}eq\PYGZus{}re \PYGZlt{}= y\PYGZus{}re*div\PYGZus{}re + y\PYGZus{}im*div\PYGZus{}im;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} x\PYGZus{}eq\PYGZus{}im \PYGZlt{}= y\PYGZus{}im*div\PYGZus{}re \PYGZhy{} y\PYGZus{}re*div\PYGZus{}im;}
+
+\PYG{k}{end}\PYG{+w}{ }\PYG{k}{architecture}\PYG{p}{;}
+\end{Verbatim}

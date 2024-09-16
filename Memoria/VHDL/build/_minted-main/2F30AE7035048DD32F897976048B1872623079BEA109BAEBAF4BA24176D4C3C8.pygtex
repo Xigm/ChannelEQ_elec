@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{inf\PYGZus{}re} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{round}\PYG{p}{((}\PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{rand}\PYG{p}{())}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{l+m+mi}{9}\PYG{p}{))}
+\PYG{n}{inf\PYGZus{}im} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{round}\PYG{p}{((}\PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{rand}\PYG{p}{())}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{l+m+mi}{9}\PYG{p}{))}
+\PYG{n}{sup\PYGZus{}re} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{round}\PYG{p}{((}\PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{rand}\PYG{p}{())}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{l+m+mi}{9}\PYG{p}{))}
+\PYG{n}{sup\PYGZus{}im} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{round}\PYG{p}{((}\PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{rand}\PYG{p}{())}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{o}{**}\PYG{l+m+mi}{9}\PYG{p}{))}
+\end{Verbatim}

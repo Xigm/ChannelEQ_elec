@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{skip1} \PYG{o}{=} \PYG{k+kc}{True}
+\PYG{n}{skip2} \PYG{o}{=} \PYG{k+kc}{True}
+\PYG{n}{skip3} \PYG{o}{=} \PYG{k+kc}{False}
+\PYG{n}{skip4} \PYG{o}{=} \PYG{k+kc}{True}
+
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{(}\PYG{n}{skip} \PYG{o}{=} \PYG{n}{skip1}\PYG{p}{)}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{testIfWorks}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+	\PYG{o}{...}
+\end{Verbatim}

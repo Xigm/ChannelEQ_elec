@@ -1,0 +1,102 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{library}\PYG{+w}{ }\PYG{n+nn}{ieee}\PYG{p}{;}
+\PYG{k}{use}\PYG{+w}{ }\PYG{n+nn}{ieee.std\PYGZus{}logic\PYGZus{}1164.}\PYG{k}{all}\PYG{p}{;}
+\PYG{k}{use}\PYG{+w}{ }\PYG{n+nn}{ieee.numeric\PYGZus{}std.}\PYG{k}{all}\PYG{p}{;}
+
+
+\PYG{k}{entity}\PYG{+w}{ }\PYG{n+nc}{interpolator}\PYG{+w}{ }\PYG{k}{is}
+\PYG{+w}{        }\PYG{k}{port}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{            }\PYG{n}{clk}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+\PYG{+w}{            }\PYG{n}{rst}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+\PYG{+w}{            }\PYG{n}{inf\PYGZus{}re}\PYG{p}{,}\PYG{n}{inf\PYGZus{}im}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{sup\PYGZus{}re}\PYG{p}{,}\PYG{n}{sup\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{            }\PYG{n}{valid}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+\PYG{+w}{            }\PYG{n}{estim\PYGZus{}re}\PYG{p}{,}\PYG{n}{estim\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{out}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{            }\PYG{n}{estim\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{out}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}
+\PYG{+w}{        }\PYG{p}{);}
+\PYG{k}{end}\PYG{+w}{ }\PYG{n+nc}{interpolator}\PYG{p}{;}
+
+\PYG{k}{architecture}\PYG{+w}{ }\PYG{n+nc}{two\PYGZus{}processes}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n+nc}{interpolator}\PYG{+w}{ }\PYG{k}{is}
+
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{i}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{p\PYGZus{}i}\PYG{+w}{    }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{+w}{ }\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{estim\PYGZus{}aux\PYGZus{}re}\PYG{p}{,}\PYG{n}{estim\PYGZus{}aux\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{14}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Two signals needed for the firewall assertions}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{firewall\PYGZus{}inf\PYGZus{}re}\PYG{p}{,}\PYG{n}{firewall\PYGZus{}inf\PYGZus{}im}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{firewall\PYGZus{}sup\PYGZus{}re}\PYG{p}{,}\PYG{n}{firewall\PYGZus{}sup\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+
+
+\PYG{k}{begin}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} i controls the interpolation:}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} when i = 12 we are idle}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} if we receive a valid input, we go to i = 0}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} when i is between 0 and 11, interpolate}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} afterwards go again to i = 12}
+\PYG{+w}{    }\PYG{n+nc}{comb}\PYG{o}{:}\PYG{+w}{ }\PYG{k}{process}\PYG{p}{(}\PYG{n}{inf\PYGZus{}re}\PYG{p}{,}\PYG{n}{inf\PYGZus{}im}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{sup\PYGZus{}re}\PYG{p}{,}\PYG{n}{sup\PYGZus{}im}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{valid}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{i}\PYG{p}{)}
+\PYG{+w}{    }\PYG{k}{begin}
+\PYG{+w}{        }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{or}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mi}{11}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{then}\PYG{+w}{  }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Anything that is not between 0 and 11: idle}
+\PYG{+w}{            }\PYG{n}{estim\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}0\PYGZsq{}}\PYG{p}{;}
+\PYG{+w}{            }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{valid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{+w}{ }\PYG{k}{then}
+\PYG{+w}{                }\PYG{n}{p\PYGZus{}i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{to\PYGZus{}signed}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{p\PYGZus{}i}\PYG{n+na}{\PYGZsq{}length}\PYG{p}{);}
+\PYG{+w}{            }\PYG{k}{else}
+\PYG{+w}{                }\PYG{n}{p\PYGZus{}i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{to\PYGZus{}signed}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{,}\PYG{n}{p\PYGZus{}i}\PYG{n+na}{\PYGZsq{}length}\PYG{p}{);}
+\PYG{+w}{            }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{if}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{else}\PYG{+w}{                         }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Between 0 and 11: interpolate}
+\PYG{+w}{            }\PYG{n}{p\PYGZus{}i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{;}
+\PYG{+w}{            }\PYG{n}{estim\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{if}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{process}\PYG{p}{;}
+
+
+\PYG{+w}{    }\PYG{n}{estim\PYGZus{}aux\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{inf\PYGZus{}re}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{o}{\PYGZhy{}}\PYG{n}{i}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{sup\PYGZus{}re}\PYG{o}{*}\PYG{n}{i}\PYG{p}{;}
+\PYG{+w}{    }\PYG{n}{estim\PYGZus{}aux\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{inf\PYGZus{}im}\PYG{o}{*}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{o}{\PYGZhy{}}\PYG{n}{i}\PYG{p}{)}\PYG{+w}{ }\PYG{o}{+}\PYG{+w}{ }\PYG{n}{sup\PYGZus{}im}\PYG{o}{*}\PYG{n}{i}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Discard the most significant bit since it doesn\PYGZsq{}t contain any}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} information (it is redundant with bit 13), and keep the 10 most}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} significant of the rest}
+\PYG{+w}{    }\PYG{n}{estim\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{estim\PYGZus{}aux\PYGZus{}re}\PYG{p}{(}\PYG{l+m+mi}{13}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{);}
+\PYG{+w}{    }\PYG{n}{estim\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{estim\PYGZus{}aux\PYGZus{}im}\PYG{p}{(}\PYG{l+m+mi}{13}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{4}\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{n+nc}{sinc}\PYG{o}{:}\PYG{+w}{ }\PYG{k}{process}\PYG{p}{(}\PYG{n}{rst}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{clk}\PYG{p}{)}
+\PYG{+w}{    }\PYG{k}{begin}
+\PYG{+w}{        }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{rst}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{+w}{ }\PYG{k}{then}
+\PYG{+w}{            }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{to\PYGZus{}signed}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{,}\PYG{n}{i}\PYG{n+na}{\PYGZsq{}length}\PYG{p}{);}\PYG{+w}{  }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} set i to 12}
+\PYG{+w}{        }\PYG{k}{elsif}\PYG{+w}{ }\PYG{n}{rising\PYGZus{}edge}\PYG{p}{(}\PYG{n}{clk}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{then}
+\PYG{+w}{            }\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{p\PYGZus{}i}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{if}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{process}\PYG{p}{;}
+
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} Firewall assertions: assure that our module is being used correctly}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} What can go wrong?}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} 1.\PYGZhy{} Valid cannot be asserted while the interpolator is busy}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} 2.\PYGZhy{} Input data cannot change while the interpolator is busy}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} (the interpolator is busy if 0 \PYGZlt{}= i \PYGZlt{}= 11)}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} An interesting idea here would be to define a procedure in}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} edc\PYGZus{}common/edc\PYGZus{}common called \PYGZdq{}fail\PYGZus{}in\PYGZus{}N\PYGZus{}cycles\PYGZdq{}, which would}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} wait N clock cycles before stopping the simulation}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{n+nc}{firewall\PYGZus{}assertions}\PYG{o}{:}\PYG{+w}{ }\PYG{k}{process}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{clk}\PYG{p}{)}
+\PYG{+w}{    }\PYG{k}{begin}
+\PYG{+w}{        }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{falling\PYGZus{}edge}\PYG{p}{(}\PYG{n}{clk}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{then}
+\PYG{+w}{            }\PYG{n}{firewall\PYGZus{}sup\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{sup\PYGZus{}re}\PYG{p}{;}
+\PYG{+w}{            }\PYG{n}{firewall\PYGZus{}sup\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{sup\PYGZus{}im}\PYG{p}{;}
+\PYG{+w}{            }\PYG{n}{firewall\PYGZus{}inf\PYGZus{}re}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{inf\PYGZus{}re}\PYG{p}{;}
+\PYG{+w}{            }\PYG{n}{firewall\PYGZus{}inf\PYGZus{}im}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{n}{inf\PYGZus{}im}\PYG{p}{;}
+\PYG{+w}{            }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZgt{}=}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{and}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{i}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{l+m+mi}{11}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{then}
+\PYG{+w}{                }\PYG{k}{if}\PYG{+w}{ }\PYG{n}{valid}\PYG{+w}{ }\PYG{o}{=}\PYG{+w}{ }\PYG{l+s+sc}{\PYGZsq{}1\PYGZsq{}}\PYG{+w}{ }\PYG{k}{then}
+\PYG{+w}{                    }\PYG{n}{report}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}valid asserted while interpolator busy, data will be lost\PYGZdq{}}
+\PYG{+w}{                    }\PYG{k}{severity}\PYG{+w}{ }\PYG{n}{note}\PYG{p}{;}
+\PYG{+w}{                }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{if}\PYG{p}{;}
+\PYG{+w}{                }\PYG{k}{if}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{inf\PYGZus{}re}\PYG{+w}{ }\PYG{o}{/=}\PYG{+w}{ }\PYG{n}{firewall\PYGZus{}inf\PYGZus{}re}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{or}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{inf\PYGZus{}im}\PYG{+w}{ }\PYG{o}{/=}\PYG{+w}{ }\PYG{n}{firewall\PYGZus{}inf\PYGZus{}im}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{or}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{sup\PYGZus{}re}\PYG{+w}{ }\PYG{o}{/=}\PYG{+w}{ }\PYG{n}{firewall\PYGZus{}sup\PYGZus{}re}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{or}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{sup\PYGZus{}im}\PYG{+w}{ }\PYG{o}{/=}\PYG{+w}{ }\PYG{n}{firewall\PYGZus{}sup\PYGZus{}im}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{then}
+\PYG{+w}{                    }\PYG{n}{report}\PYG{+w}{ }\PYG{l+s}{\PYGZdq{}data changed while interpolator busy, interpolation will be wrong\PYGZdq{}}
+\PYG{+w}{                    }\PYG{k}{severity}\PYG{+w}{ }\PYG{n}{note}\PYG{p}{;}
+\PYG{+w}{                }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{if}\PYG{p}{;}
+\PYG{+w}{                }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} if valid = \PYGZsq{}1\PYGZsq{} then}
+\PYG{+w}{                }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}     report \PYGZdq{}valid equals 1\PYGZdq{} severity warning;}
+\PYG{+w}{                }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} end if;}
+\PYG{+w}{            }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{if}\PYG{p}{;}
+\PYG{+w}{        }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{if}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{end}\PYG{+w}{ }\PYG{k}{process}\PYG{p}{;}
+
+\PYG{k}{end}\PYG{+w}{ }\PYG{n+nc}{two\PYGZus{}processes}\PYG{p}{;}
+\end{Verbatim}

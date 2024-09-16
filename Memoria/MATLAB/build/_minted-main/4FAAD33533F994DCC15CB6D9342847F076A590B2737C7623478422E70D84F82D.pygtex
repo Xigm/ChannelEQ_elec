@@ -1,0 +1,18 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c}{\PYGZpc{} Interpolar h}
+\PYG{k}{for}\PYG{+w}{ }\PYG{n+nb}{i}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{n}{NUM\PYGZus{}SYMB}
+\PYG{+w}{	}\PYG{n}{y}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{zeros}\PYG{p}{(}\PYG{n+nb}{length}\PYG{p}{(}\PYG{n}{pilotsLoc}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{2}\PYG{p}{);}
+\PYG{+w}{	}\PYG{n}{y}\PYG{p}{(:,}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{hest}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{k}{end}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n+nb}{i}\PYG{p}{);}
+\PYG{+w}{	}\PYG{n}{y}\PYG{p}{(:,}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{hest}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{:}\PYG{k}{end}\PYG{p}{,}\PYG{n+nb}{i}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{n}{hest}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{k}{end}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n+nb}{i}\PYG{p}{))}\PYG{o}{/}\PYG{l+m+mi}{12}\PYG{p}{;}
+\PYG{+w}{	}\PYG{n}{v}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{repmat}\PYG{p}{((}\PYG{l+m+mi}{0}\PYG{p}{:}\PYG{l+m+mi}{11}\PYG{p}{),}\PYG{n+nb}{length}\PYG{p}{(}\PYG{n}{y}\PYG{p}{),}\PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{+w}{	}\PYG{n}{v}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{v}\PYG{o}{.*}\PYG{n+nb}{kron}\PYG{p}{(}\PYG{n}{y}\PYG{p}{(:,}\PYG{l+m+mi}{1}\PYG{p}{),}\PYG{n+nb}{ones}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{));}
+\PYG{+w}{	}\PYG{n}{v}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{v}\PYG{o}{+}\PYG{n+nb}{kron}\PYG{p}{(}\PYG{n}{y}\PYG{p}{(:,}\PYG{l+m+mi}{2}\PYG{p}{),}\PYG{n+nb}{ones}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{12}\PYG{p}{));}
+\PYG{+w}{	}\PYG{n}{v}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n+nb}{reshape}\PYG{p}{(}\PYG{n}{v}\PYG{p}{.}\PYG{o}{\PYGZsq{}}\PYG{p}{,[],}\PYG{l+m+mi}{1}\PYG{p}{);}
+\PYG{+w}{	}\PYG{c}{\PYGZpc{} Es una sola concatenación, el warning sale por que la variable}
+\PYG{+w}{	}\PYG{c}{\PYGZpc{} donde asigno el valor es una de las que concateno. Si usara en}
+\PYG{+w}{	}\PYG{c}{\PYGZpc{} vez de esa línea algo como \PYGZdq{}nueva\PYGZus{}var = [v; hest(i,end)];\PYGZdq{} no}
+\PYG{+w}{	}\PYG{c}{\PYGZpc{} daría error. (comprobado)}
+\PYG{+w}{	}\PYG{n}{v}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{p}{[}\PYG{n}{v}\PYG{p}{;}\PYG{+w}{ }\PYG{n}{hest}\PYG{p}{(}\PYG{n+nb}{i}\PYG{p}{,}\PYG{k}{end}\PYG{p}{)];}
+\PYG{+w}{	}\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx\PYGZus{}eq}\PYG{p}{(:,}\PYG{n+nb}{i}\PYG{p}{)}\PYG{+w}{ }\PYG{p}{=}\PYG{+w}{ }\PYG{n}{ofdm\PYGZus{}freq\PYGZus{}rx\PYGZus{}o}\PYG{p}{(}\PYG{n+nb}{ceil}\PYG{p}{((}\PYG{n}{NFFT}\PYG{o}{\PYGZhy{}}\PYG{n}{useCarrier}\PYG{p}{)}\PYG{o}{/}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{o}{+}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{:}\PYG{n}{useCarrier}\PYG{p}{),}\PYG{n+nb}{i}\PYG{p}{)}\PYG{o}{./}\PYG{n}{v}\PYG{p}{;}
+\PYG{k}{end}
+\end{Verbatim}

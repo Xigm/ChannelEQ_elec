@@ -1,0 +1,118 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{library}\PYG{+w}{ }\PYG{n+nn}{ieee}\PYG{p}{;}
+\PYG{k}{use}\PYG{+w}{ }\PYG{n+nn}{ieee.std\PYGZus{}logic\PYGZus{}1164.}\PYG{k}{all}\PYG{p}{;}
+\PYG{k}{use}\PYG{+w}{ }\PYG{n+nn}{ieee.numeric\PYGZus{}std.}\PYG{k}{all}\PYG{p}{;}
+
+\PYG{c+c1}{\PYGZhy{}\PYGZhy{} toplevel of estimator + eq}
+
+\PYG{k}{entity}\PYG{+w}{ }\PYG{n+nc}{fullsystem}\PYG{+w}{ }\PYG{k}{is}
+\PYG{+w}{    }\PYG{k}{generic}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{output\PYGZus{}prec}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{Integer}\PYG{+w}{ }\PYG{o}{:=}\PYG{+w}{ }\PYG{l+m+mi}{23}
+\PYG{+w}{    }\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{port}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} inputs are the same as in estimator}
+\PYG{+w}{        }\PYG{n}{clk}\PYG{+w}{   }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+\PYG{+w}{        }\PYG{n}{rst}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}re}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{y\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{in}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+
+\PYG{+w}{        }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} and outputs the same as eq}
+\PYG{+w}{        }\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{out}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{n}{output\PYGZus{}prec}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{out}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{n}{output\PYGZus{}prec}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{        }\PYG{n}{eq\PYGZus{}valid\PYGZus{}out}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{out}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}
+\PYG{+w}{    }\PYG{p}{);}
+\PYG{k}{end}\PYG{+w}{ }\PYG{k}{entity}\PYG{p}{;}
+
+\PYG{k}{architecture}\PYG{+w}{ }\PYG{n+nc}{arch\PYGZus{}fullsystem}\PYG{+w}{ }\PYG{k}{of}\PYG{+w}{ }\PYG{n+nc}{fullsystem}\PYG{+w}{ }\PYG{k}{is}
+
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{estim\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{std\PYGZus{}logic}\PYG{p}{;}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{out\PYGZus{}estim\PYGZus{}re}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{out\PYGZus{}estim\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{y\PYGZus{}re\PYGZus{}delayed\PYGZus{}1}\PYG{p}{,}\PYG{n}{y\PYGZus{}re\PYGZus{}delayed\PYGZus{}2}\PYG{p}{,}\PYG{n}{y\PYGZus{}re\PYGZus{}delayed\PYGZus{}3}\PYG{p}{,}\PYG{n}{y\PYGZus{}re\PYGZus{}delayed\PYGZus{}4}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{y\PYGZus{}im\PYGZus{}delayed\PYGZus{}1}\PYG{p}{,}\PYG{n}{y\PYGZus{}im\PYGZus{}delayed\PYGZus{}2}\PYG{p}{,}\PYG{n}{y\PYGZus{}im\PYGZus{}delayed\PYGZus{}3}\PYG{p}{,}\PYG{n}{y\PYGZus{}im\PYGZus{}delayed\PYGZus{}4}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{+w}{    }\PYG{k}{signal}\PYG{+w}{ }\PYG{n}{data\PYGZus{}in\PYGZus{}eq\PYGZus{}re}\PYG{p}{,}\PYG{+w}{ }\PYG{n}{data\PYGZus{}in\PYGZus{}eq\PYGZus{}im}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k+kt}{signed}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{0}\PYG{p}{);}
+\PYG{k}{begin}
+
+\PYG{+w}{   }
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} y\PYGZus{}re\PYGZus{}delayed\PYGZus{}1 \PYGZlt{}= y\PYGZus{}re;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} y\PYGZus{}im\PYGZus{}delayed\PYGZus{}1 \PYGZlt{}= y\PYGZus{}im;}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} \PYGZhy{}\PYGZhy{} big process to create flipflops and get those signals delayed}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} sinc : process (clk,rst)}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} begin}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}     if rst = \PYGZsq{}1\PYGZsq{} then}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}re\PYGZus{}delayed\PYGZus{}2 \PYGZlt{}= (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{});}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}re\PYGZus{}delayed\PYGZus{}3 \PYGZlt{}= (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{});}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}re\PYGZus{}delayed\PYGZus{}4 \PYGZlt{}= (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{});}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}im\PYGZus{}delayed\PYGZus{}2 \PYGZlt{}= (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{});}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}im\PYGZus{}delayed\PYGZus{}3 \PYGZlt{}= (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{});}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}im\PYGZus{}delayed\PYGZus{}4 \PYGZlt{}= (others =\PYGZgt{} \PYGZsq{}0\PYGZsq{});}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}     elsif rising\PYGZus{}edge(clk) then}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}re\PYGZus{}delayed\PYGZus{}2 \PYGZlt{}= y\PYGZus{}re\PYGZus{}delayed\PYGZus{}1;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}re\PYGZus{}delayed\PYGZus{}3 \PYGZlt{}= y\PYGZus{}re\PYGZus{}delayed\PYGZus{}2;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}re\PYGZus{}delayed\PYGZus{}4 \PYGZlt{}= y\PYGZus{}re\PYGZus{}delayed\PYGZus{}3;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}im\PYGZus{}delayed\PYGZus{}2 \PYGZlt{}= y\PYGZus{}im\PYGZus{}delayed\PYGZus{}1;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}im\PYGZus{}delayed\PYGZus{}3 \PYGZlt{}= y\PYGZus{}im\PYGZus{}delayed\PYGZus{}2;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}         y\PYGZus{}im\PYGZus{}delayed\PYGZus{}4 \PYGZlt{}= y\PYGZus{}im\PYGZus{}delayed\PYGZus{}3;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{}     end if;}
+\PYG{+w}{    }\PYG{c+c1}{\PYGZhy{}\PYGZhy{} end process;}
+
+\PYG{+w}{    }\PYG{n}{estimador}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{entity}\PYG{+w}{ }\PYG{n+nc}{work}\PYG{p}{.}\PYG{n}{toplevel}
+\PYG{+w}{    }\PYG{k}{port}\PYG{+w}{ }\PYG{k}{map}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{clk}\PYG{+w}{   }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{clk}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{rst}\PYG{+w}{   }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{rst}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}re}\PYG{+w}{   }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{y\PYGZus{}re}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}im}\PYG{+w}{   }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{y\PYGZus{}im}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{y\PYGZus{}valid}\PYG{p}{,}
+
+\PYG{+w}{        }\PYG{n}{valid}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{estim\PYGZus{}valid}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{out\PYGZus{}re}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{out\PYGZus{}estim\PYGZus{}re}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{out\PYGZus{}im}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{out\PYGZus{}estim\PYGZus{}im}
+\PYG{+w}{    }\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{n}{reg\PYGZus{}re}\PYG{o}{:}\PYG{+w}{ }\PYG{k}{entity}\PYG{+w}{ }\PYG{n+nc}{work}\PYG{p}{.}\PYG{n}{registro}
+\PYG{+w}{    }\PYG{k}{generic}\PYG{+w}{ }\PYG{k}{map}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{delay}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mi}{14}
+\PYG{+w}{    }\PYG{p}{)}
+\PYG{+w}{    }\PYG{k}{port}\PYG{+w}{ }\PYG{k}{map}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{clk}\PYG{+w}{   }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{clk}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{rst}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{rst}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{ena}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{y\PYGZus{}valid}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{input}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{y\PYGZus{}re}\PYG{p}{,}
+
+\PYG{+w}{        }\PYG{n}{output}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{data\PYGZus{}in\PYGZus{}eq\PYGZus{}re}
+\PYG{+w}{    }\PYG{p}{);}
+
+\PYG{+w}{    }\PYG{n}{reg\PYGZus{}im}\PYG{o}{:}\PYG{+w}{ }\PYG{k}{entity}\PYG{+w}{ }\PYG{n+nc}{work}\PYG{p}{.}\PYG{n}{registro}
+\PYG{+w}{    }\PYG{k}{generic}\PYG{+w}{ }\PYG{k}{map}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{delay}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{l+m+mi}{14}
+\PYG{+w}{    }\PYG{p}{)}
+\PYG{+w}{    }\PYG{k}{port}\PYG{+w}{ }\PYG{k}{map}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{clk}\PYG{+w}{   }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{clk}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{rst}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{rst}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{ena}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{y\PYGZus{}valid}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{input}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{y\PYGZus{}im}\PYG{p}{,}
+
+\PYG{+w}{        }\PYG{n}{output}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{data\PYGZus{}in\PYGZus{}eq\PYGZus{}im}
+\PYG{+w}{    }\PYG{p}{);}
+\PYG{+w}{    }
+\PYG{+w}{    }\PYG{n}{eq}\PYG{+w}{ }\PYG{o}{:}\PYG{+w}{ }\PYG{k}{entity}\PYG{+w}{ }\PYG{n+nc}{work}\PYG{p}{.}\PYG{n}{eq}
+\PYG{+w}{    }\PYG{k}{generic}\PYG{+w}{ }\PYG{k}{map}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{output\PYGZus{}prec}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{output\PYGZus{}prec}
+\PYG{+w}{    }\PYG{p}{)}
+\PYG{+w}{    }\PYG{k}{port}\PYG{+w}{ }\PYG{k}{map}\PYG{+w}{ }\PYG{p}{(}
+\PYG{+w}{        }\PYG{n}{clk}\PYG{+w}{  }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{clk}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{rst}\PYG{+w}{  }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{rst}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{h\PYGZus{}re}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{out\PYGZus{}estim\PYGZus{}re}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{h\PYGZus{}im}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{out\PYGZus{}estim\PYGZus{}im}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}re}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{data\PYGZus{}in\PYGZus{}eq\PYGZus{}re}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{y\PYGZus{}im}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{data\PYGZus{}in\PYGZus{}eq\PYGZus{}im}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{valid}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{estim\PYGZus{}valid}\PYG{p}{,}
+
+\PYG{+w}{        }\PYG{n}{x\PYGZus{}eq\PYGZus{}re}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}re}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{x\PYGZus{}eq\PYGZus{}im}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{x\PYGZus{}eq\PYGZus{}out\PYGZus{}im}\PYG{p}{,}
+\PYG{+w}{        }\PYG{n}{eq\PYGZus{}valid}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{eq\PYGZus{}valid\PYGZus{}out}
+\PYG{+w}{    }\PYG{p}{);}
+
+\PYG{k}{end}\PYG{+w}{ }\PYG{k}{architecture}\PYG{p}{;}
+\end{Verbatim}

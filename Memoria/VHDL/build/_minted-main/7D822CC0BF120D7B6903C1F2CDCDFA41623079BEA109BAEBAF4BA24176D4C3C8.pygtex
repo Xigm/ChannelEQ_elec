@@ -1,0 +1,20 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{()}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{test1}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{k}{global} \PYG{n}{maxCycles}\PYG{p}{,}\PYG{n}{currentCycle}
+    \PYG{n}{values} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{k}{await} \PYG{n}{cocotb}\PYG{o}{.}\PYG{n}{start}\PYG{p}{(}\PYG{n}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{))}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{ena}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{k}{while} \PYG{n}{currentCycle} \PYG{o}{\PYGZlt{}} \PYG{n}{maxCycles}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+        \PYG{n}{values}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{cuenta}\PYG{p}{))}
+
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{values}\PYG{p}{)}
+\end{Verbatim}

@@ -1,0 +1,96 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{cocotb}
+\PYG{k+kn}{from} \PYG{n+nn}{cocotb.triggers} \PYG{k+kn}{import} \PYG{n}{Timer}
+\PYG{k+kn}{from} \PYG{n+nn}{cocotb.triggers} \PYG{k+kn}{import} \PYG{n}{RisingEdge}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{c+c1}{\PYGZsh{} import oct2py}
+
+\PYG{c+c1}{\PYGZsh{} this tb tests if the block works properly}
+\PYG{c+c1}{\PYGZsh{} it main task is to serve pilots to the interpolator,}
+\PYG{c+c1}{\PYGZsh{} but only pilots. All other samples must be isolated }
+\PYG{c+c1}{\PYGZsh{} from interpolator.}
+
+\PYG{c+c1}{\PYGZsh{} this test has some interesting things.}
+
+\PYG{n}{maxCycles} \PYG{o}{=} \PYG{l+m+mi}{100}
+\PYG{n}{currentCycle} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Generate clock pulses.\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{global} \PYG{n}{maxCycles}\PYG{p}{,}\PYG{n}{currentCycle}
+    \PYG{k}{for} \PYG{n}{cycle} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{maxCycles}\PYG{p}{):}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{await} \PYG{n}{Timer}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{units}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}ns\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+        \PYG{k}{await} \PYG{n}{Timer}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{units}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}ns\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{currentCycle} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{()}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{test1}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{k}{global} \PYG{n}{maxCycles}\PYG{p}{,}\PYG{n}{currentCycle}
+    
+    \PYG{k}{await} \PYG{n}{cocotb}\PYG{o}{.}\PYG{n}{start}\PYG{p}{(}\PYG{n}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{))}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{write\PYGZus{}enable}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{c+c1}{\PYGZsh{} while currentCycle \PYGZlt{} maxCycles\PYGZhy{}1:}
+    \PYG{c+c1}{\PYGZsh{}     await RisingEdge(dut.clk)}
+    \PYG{c+c1}{\PYGZsh{}     dut.\PYGZus{}log.info(\PYGZdq{}CLK\PYGZdq{})}
+
+    \PYG{c+c1}{\PYGZsh{} let some cylces run}
+
+    \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{3}\PYG{p}{):}
+        \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{write\PYGZus{}enable}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{piloto\PYGZus{}y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{10}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{piloto\PYGZus{}y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{100}
+    
+    \PYG{c+c1}{\PYGZsh{} no PRBS needed}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{PRBS}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{5}\PYG{p}{):}
+        \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{12}\PYG{p}{):}
+            \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+
+            \PYG{k}{if} \PYG{n}{j} \PYG{o}{==} \PYG{l+m+mi}{11}\PYG{p}{:}
+                \PYG{n}{dut}\PYG{o}{.}\PYG{n}{write\PYGZus{}enable}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+                \PYG{n}{dut}\PYG{o}{.}\PYG{n}{piloto\PYGZus{}y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{10} \PYG{o}{+} \PYG{p}{(}\PYG{n}{i}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mi}{5}
+                \PYG{n}{dut}\PYG{o}{.}\PYG{n}{piloto\PYGZus{}y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{100} \PYG{o}{+} \PYG{p}{(}\PYG{n}{i}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{o}{*}\PYG{l+m+mi}{10}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{dut}\PYG{o}{.}\PYG{n}{write\PYGZus{}enable}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+                \PYG{n}{dut}\PYG{o}{.}\PYG{n}{piloto\PYGZus{}y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{69}
+                \PYG{n}{dut}\PYG{o}{.}\PYG{n}{piloto\PYGZus{}y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{69}
+
+            \PYG{c+c1}{\PYGZsh{} check if incorrect value is propagated}
+
+            \PYG{c+c1}{\PYGZsh{} try avoids int(XXX) or int(uuu) case}
+            \PYG{c+c1}{\PYGZsh{} this could be avoided by cocotb\PYGZsq{}s }
+            \PYG{c+c1}{\PYGZsh{} resolve u, which would change u bit values to}
+            \PYG{c+c1}{\PYGZsh{} one at our choice, but we would lose some sight of }
+            \PYG{c+c1}{\PYGZsh{} what is happening.}
+            \PYG{k}{try}\PYG{p}{:}
+                \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{inf\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+                \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{inf\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+                \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{sup\PYGZus{}re}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+                \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{sup\PYGZus{}im}\PYG{o}{.}\PYG{n}{value}\PYG{p}{)}
+            \PYG{k}{except}\PYG{p}{:}
+                \PYG{k}{pass}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} if pilots values are correctly casted into int, check if they got wrong values (samples values are represented by 69)}
+                \PYG{k}{if} \PYG{n}{dut}\PYG{o}{.}\PYG{n}{inf\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{==} \PYG{l+m+mi}{69} \PYG{o+ow}{or} \PYG{n}{dut}\PYG{o}{.}\PYG{n}{inf\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{==} \PYG{l+m+mi}{69} \PYG{o+ow}{or} \PYG{n}{dut}\PYG{o}{.}\PYG{n}{sup\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{==} \PYG{l+m+mi}{69} \PYG{o+ow}{or} \PYG{n}{dut}\PYG{o}{.}\PYG{n}{sup\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{==} \PYG{l+m+mi}{69}\PYG{p}{:}        
+                    \PYG{k}{raise} \PYG{l+s+s2}{\PYGZdq{}El valor incorrecto ha sido propagaddo!\PYGZdq{}}
+
+    \PYG{c+c1}{\PYGZsh{} for \PYGZus{} in range(40):}
+    \PYG{c+c1}{\PYGZsh{}     await RisingEdge(dut.clk)}
+
+\end{Verbatim}

@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{fromsigned2int}\PYG{p}{(}\PYG{n}{bits}\PYG{p}{,}\PYG{n}{base}\PYG{p}{):}
+    \PYG{n}{v} \PYG{o}{=} \PYG{n}{base}\PYG{o}{**}\PYG{n}{np}\PYG{o}{.}\PYG{n}{arange}\PYG{p}{(}\PYG{n}{bits}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{v}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{n}{v}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{sum}\PYG{p}{(}\PYG{n}{bits}\PYG{o}{*}\PYG{n}{np}\PYG{o}{.}\PYG{n}{kron}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{ones}\PYG{p}{((}\PYG{n}{bits}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],}\PYG{l+m+mi}{1}\PYG{p}{)),}\PYG{n}{v}\PYG{p}{),}\PYG{n}{axis}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+
+\PYG{c+c1}{\PYGZsh{} much much faster (halves time to compute)}
+\PYG{k}{def} \PYG{n+nf}{fromsigned2intv2}\PYG{p}{(}\PYG{n}{bits}\PYG{p}{):}
+    \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n}{value}\PYG{o}{.}\PYG{n}{signed\PYGZus{}integer} \PYG{k}{for} \PYG{n}{value} \PYG{o+ow}{in} \PYG{n}{bits}\PYG{p}{])}
+\end{Verbatim}

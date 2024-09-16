@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{process}\PYG{+w}{ }\PYG{p}{(}\PYG{n}{reg}\PYG{p}{)}
+\PYG{k}{begin}
+\PYG{+w}{	}\PYG{c+c1}{\PYGZhy{}\PYGZhy{} not working till GHDL\PYGZus{}ARGS ?= \PYGZhy{}\PYGZhy{}std=08 is used in GHDL compiler from cocotb (thanks to @hipolitoguzman)}
+\PYG{+w}{	}\PYG{n}{preg}\PYG{+w}{ }\PYG{o}{\PYGZlt{}=}\PYG{+w}{ }\PYG{p}{(}\PYG{l+m+mi}{11}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{2}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{reg}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{+w}{ }\PYG{k}{downto}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{p}{),}\PYG{+w}{ }\PYG{l+m+mi}{1}\PYG{+w}{ }\PYG{o}{=\PYGZgt{}}\PYG{+w}{ }\PYG{n}{reg}\PYG{p}{(}\PYG{l+m+mi}{11}\PYG{p}{)}\PYG{+w}{ }\PYG{k}{xor}\PYG{+w}{ }\PYG{n}{reg}\PYG{p}{(}\PYG{l+m+mi}{9}\PYG{p}{));}
+\PYG{+w}{	}
+\PYG{+w}{	}\PYG{c+c1}{\PYGZhy{}\PYGZhy{} workaround}
+\PYG{+w}{	}\PYG{c+c1}{\PYGZhy{}\PYGZhy{} preg(11 downto 2) \PYGZlt{}= reg(10 downto 1);}
+\PYG{+w}{	}\PYG{c+c1}{\PYGZhy{}\PYGZhy{} preg(1) \PYGZlt{}= reg(11) xor reg(9);}
+\PYG{k}{end}\PYG{+w}{ }\PYG{k}{process}\PYG{p}{;}
+\end{Verbatim}

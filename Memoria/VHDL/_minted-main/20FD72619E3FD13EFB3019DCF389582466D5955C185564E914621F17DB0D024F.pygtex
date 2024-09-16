@@ -1,0 +1,74 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{cocotb}
+\PYG{k+kn}{from} \PYG{n+nn}{cocotb.triggers} \PYG{k+kn}{import} \PYG{n}{Timer}
+\PYG{k+kn}{from} \PYG{n+nn}{cocotb.triggers} \PYG{k+kn}{import} \PYG{n}{RisingEdge}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{c+c1}{\PYGZsh{} import oct2py}
+
+\PYG{c+c1}{\PYGZsh{} basic cctb file}
+\PYG{c+c1}{\PYGZsh{} define global vars, define clock and let the clock run till end}
+
+\PYG{n}{maxCycles} \PYG{o}{=} \PYG{l+m+mi}{20}
+\PYG{n}{currentCycle} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Generate clock pulses.\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{global} \PYG{n}{maxCycles}\PYG{p}{,}\PYG{n}{currentCycle}
+    \PYG{k}{for} \PYG{n}{cycle} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{maxCycles}\PYG{p}{):}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{await} \PYG{n}{Timer}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{units}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}ns\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+        \PYG{k}{await} \PYG{n}{Timer}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{units}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}ns\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{currentCycle} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+
+\PYG{n+nd}{@cocotb}\PYG{o}{.}\PYG{n}{test}\PYG{p}{()}
+\PYG{k}{async} \PYG{k}{def} \PYG{n+nf}{test1}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{):}
+    \PYG{k}{global} \PYG{n}{maxCycles}\PYG{p}{,}\PYG{n}{currentCycle}
+
+    \PYG{k}{await} \PYG{n}{cocotb}\PYG{o}{.}\PYG{n}{start}\PYG{p}{(}\PYG{n}{generate\PYGZus{}clock}\PYG{p}{(}\PYG{n}{dut}\PYG{p}{))}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}re}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{10}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}im}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{10}
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{c+c1}{\PYGZsh{}\PYGZsh{} Valores indeterminados por ahora}
+    \PYG{c+c1}{\PYGZsh{} dut.estim\PYGZus{}re.value}
+    \PYG{c+c1}{\PYGZsh{} dut.estim\PYGZus{}im.value}
+    \PYG{c+c1}{\PYGZsh{} print(dut.estim\PYGZus{}valid.value)}
+
+    \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{rst}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+    
+    \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)} \PYG{c+c1}{\PYGZsh{} contador = 11}
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)} 
+
+    \PYG{n}{dut}\PYG{o}{.}\PYG{n}{y\PYGZus{}valid}\PYG{o}{.}\PYG{n}{value} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{k}{while} \PYG{n}{currentCycle} \PYG{o}{\PYGZlt{}} \PYG{n}{maxCycles}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{k}{await} \PYG{n}{RisingEdge}\PYG{p}{(}\PYG{n}{dut}\PYG{o}{.}\PYG{n}{clk}\PYG{p}{)}
+        \PYG{n}{dut}\PYG{o}{.}\PYG{n}{\PYGZus{}log}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}CLK\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} for i in range(5):}
+        
+    \PYG{c+c1}{\PYGZsh{}     for j in range(13):}
+    \PYG{c+c1}{\PYGZsh{}         \PYGZsh{} if j == 0:}
+    \PYG{c+c1}{\PYGZsh{}         \PYGZsh{}     dut.y\PYGZus{}valid.value = 1}
+    \PYG{c+c1}{\PYGZsh{}         \PYGZsh{} else:}
+    \PYG{c+c1}{\PYGZsh{}         \PYGZsh{}     dut.y\PYGZus{}valid.value = 0}
+
+    \PYG{c+c1}{\PYGZsh{}         await RisingEdge(dut.clk)}
+
+    \PYG{c+c1}{\PYGZsh{} dut.y\PYGZus{}valid.value = 1}
+    
+    \PYG{c+c1}{\PYGZsh{} while currentCycle \PYGZlt{} maxCycles\PYGZhy{}1:}
+    \PYG{c+c1}{\PYGZsh{}     await RisingEdge(dut.clk)}
+\end{Verbatim}

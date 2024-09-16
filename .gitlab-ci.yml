@@ -1,0 +1,164 @@
+# List of stages, in order of execution
+stages:
+  - test
+
+# Common commands to be executed before each job
+before_script:
+  - source /home/salas/fosshdl/env.rc
+
+# Each job:
+#   - belongs to a stage
+#   - runs inside a docker image (which in our case contains all the software we need)
+#   - has a script with the commands to execute
+#   - generates artifacts which can be used by other jobs and downloaded by the user
+#   - one of those artifacts is the xml report in JUnit format, which is read by gitlab
+
+test_allbutinter:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/AllButInterpolatorCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/AllButInterpolatorCCTb/results.xml
+    reports:
+      junit:
+        - Linux/Trabajo/AllButInterpolatorCCTb/results.xml
+
+test_contador:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/ContadorCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/ContadorCCTb/results.xml
+    reports:
+      junit:
+        - Linux/Trabajo/ContadorCCTb/results.xml
+
+test_eq:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/EQCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/EQCCTb/results.xml
+    reports:
+      junit:
+        - Linux/Trabajo/EQCCTb/results.xml
+
+# test_estimador:
+#   stage: test
+#   image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+#   script:
+#     - cd Linux/Trabajo/EstimadorCCTb
+#     - make
+#   artifacts:
+#     when: always
+#     paths:
+#       - Linux/Trabajo/EstimadorCCTb/results.xml
+#     reports:
+#       junit:
+#         - Linux/Trabajo/EstimadorCCTb/results.xml
+
+test_FSM:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/FSMCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/FSMCCTb/results.xml
+    reports:
+      junit:
+        - Linux/Trabajo/FSMCCTb/results.xml
+
+test_full:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/FullSystemCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/FullSystemCCTb/results.xml
+      - Linux/Trabajo/FullSystemCCTb/imgs/eq.png
+      - Linux/Trabajo/FullSystemCCTb/imgs/eq_rst.png
+      - Linux/Trabajo/FullSystemCCTb/imgs/vsOctave2.png
+      - Linux/Trabajo/FullSystemCCTb/imgs/vsOctave8.png
+      - Linux/Trabajo/FullSystemCCTb/imgs/estimacioncanalyeq.png
+    reports:
+      junit:
+        - Linux/Trabajo/FullSystemCCTb/results.xml
+
+test_interMig:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/InterMigCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/InterMigCCTb/results.xml
+    reports:
+      junit:
+        - Linux/Trabajo/InterMigCCTb/results.xml
+
+test_interpolador:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/InterpoladorCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/InterpoladorCCTb/results.xml
+    reports:
+      junit:
+        - Linux/Trabajo/InterpoladorCCTb/results.xml
+
+test_toplevel:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/TopLevelCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/TopLevelCCTb/results.xml
+      - Linux/Trabajo/TopLevelCCTb/imgs/pilotos.png
+      - Linux/Trabajo/TopLevelCCTb/imgs/vsOctave2.png
+      - Linux/Trabajo/TopLevelCCTb/imgs/vsOctave8.png
+      - Linux/Trabajo/TopLevelCCTb/imgs/absvsoctave8.png
+    reports:
+      junit:
+        - Linux/Trabajo/TopLevelCCTb/results.xml
+
+test_wrap:
+  stage: test
+  image: registry.gitlab.com/hgpub/fosshdl-dist:edc
+  script:
+    - cd Linux/Trabajo/WrapContadoresCCTb
+    - make
+  artifacts:
+    when: always
+    paths:
+      - Linux/Trabajo/WrapContadoresCCTb/results.xml
+    reports:
+      junit:
+        - Linux/Trabajo/WrapContadoresCCTb/results.xml
+

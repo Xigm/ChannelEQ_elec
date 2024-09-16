@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c}{\PYGZpc{}\PYGZpc{} dummy channel}
+\PYG{c}{\PYGZpc{} deltaF = 1/Tsymb;}
+\PYG{c}{\PYGZpc{} k = \PYGZhy{}NFFT/2:NFFT/2\PYGZhy{}1;}
+\PYG{c}{\PYGZpc{} canal = 0.4*exp(\PYGZhy{}1j*2*pi*deltaF*k*1e\PYGZhy{}6)+0.1*exp(\PYGZhy{}1j*2*pi*deltaF*k*5.4e\PYGZhy{}6);}
+\PYG{c}{\PYGZpc{} canalTiempo = ifft(ifftshift(canal));}
+\end{Verbatim}

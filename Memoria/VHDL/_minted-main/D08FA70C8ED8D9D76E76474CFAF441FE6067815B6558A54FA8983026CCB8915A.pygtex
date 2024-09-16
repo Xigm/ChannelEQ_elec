@@ -1,0 +1,166 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{c+c1}{\PYGZsh{} List of stages, in order of execution}
+\PYG{n+nt}{stages}\PYG{p}{:}
+\PYG{+w}{  }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+
+\PYG{c+c1}{\PYGZsh{} Common commands to be executed before each job}
+\PYG{n+nt}{before\PYGZus{}script}\PYG{p}{:}
+\PYG{+w}{  }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{source /home/salas/fosshdl/env.rc}
+
+\PYG{c+c1}{\PYGZsh{} Each job:}
+\PYG{c+c1}{\PYGZsh{}   \PYGZhy{} belongs to a stage}
+\PYG{c+c1}{\PYGZsh{}   \PYGZhy{} runs inside a docker image (which in our case contains all the software we need)}
+\PYG{c+c1}{\PYGZsh{}   \PYGZhy{} has a script with the commands to execute}
+\PYG{c+c1}{\PYGZsh{}   \PYGZhy{} generates artifacts which can be used by other jobs and downloaded by the user}
+\PYG{c+c1}{\PYGZsh{}   \PYGZhy{} one of those artifacts is the xml report in JUnit format, which is read by gitlab}
+
+\PYG{n+nt}{test\PYGZus{}allbutinter}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/AllButInterpolatorCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/AllButInterpolatorCCTb/results.xml}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/AllButInterpolatorCCTb/results.xml}
+
+\PYG{n+nt}{test\PYGZus{}contador}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/ContadorCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/ContadorCCTb/results.xml}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/ContadorCCTb/results.xml}
+
+\PYG{n+nt}{test\PYGZus{}eq}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/EQCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/EQCCTb/results.xml}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/EQCCTb/results.xml}
+
+\PYG{c+c1}{\PYGZsh{} test\PYGZus{}estimador:}
+\PYG{c+c1}{\PYGZsh{}   stage: test}
+\PYG{c+c1}{\PYGZsh{}   image: registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{c+c1}{\PYGZsh{}   script:}
+\PYG{c+c1}{\PYGZsh{}     \PYGZhy{} cd Linux/Trabajo/EstimadorCCTb}
+\PYG{c+c1}{\PYGZsh{}     \PYGZhy{} make}
+\PYG{c+c1}{\PYGZsh{}   artifacts:}
+\PYG{c+c1}{\PYGZsh{}     when: always}
+\PYG{c+c1}{\PYGZsh{}     paths:}
+\PYG{c+c1}{\PYGZsh{}       \PYGZhy{} Linux/Trabajo/EstimadorCCTb/results.xml}
+\PYG{c+c1}{\PYGZsh{}     reports:}
+\PYG{c+c1}{\PYGZsh{}       junit:}
+\PYG{c+c1}{\PYGZsh{}         \PYGZhy{} Linux/Trabajo/EstimadorCCTb/results.xml}
+
+\PYG{n+nt}{test\PYGZus{}FSM}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/FSMCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FSMCCTb/results.xml}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FSMCCTb/results.xml}
+
+\PYG{n+nt}{test\PYGZus{}full}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/FullSystemCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/results.xml}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/eq.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/eq\PYGZus{}rst.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/vsOctave2.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/vsOctave8.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/imgs/estimacioncanalyeq.png}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/FullSystemCCTb/results.xml}
+
+\PYG{n+nt}{test\PYGZus{}interMig}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/InterMigCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/InterMigCCTb/results.xml}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/InterMigCCTb/results.xml}
+
+\PYG{n+nt}{test\PYGZus{}interpolador}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/InterpoladorCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/InterpoladorCCTb/results.xml}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/InterpoladorCCTb/results.xml}
+
+\PYG{n+nt}{test\PYGZus{}toplevel}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/TopLevelCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/TopLevelCCTb/results.xml}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/TopLevelCCTb/imgs/pilotos.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/TopLevelCCTb/imgs/vsOctave2.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/TopLevelCCTb/imgs/vsOctave8.png}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/TopLevelCCTb/imgs/absvsoctave8.png}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/TopLevelCCTb/results.xml}
+
+\PYG{n+nt}{test\PYGZus{}wrap}\PYG{p}{:}
+\PYG{+w}{  }\PYG{n+nt}{stage}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{test}
+\PYG{+w}{  }\PYG{n+nt}{image}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{registry.gitlab.com/hgpub/fosshdl\PYGZhy{}dist:edc}
+\PYG{+w}{  }\PYG{n+nt}{script}\PYG{p}{:}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{cd Linux/Trabajo/WrapContadoresCCTb}
+\PYG{+w}{    }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{make}
+\PYG{+w}{  }\PYG{n+nt}{artifacts}\PYG{p}{:}
+\PYG{+w}{    }\PYG{n+nt}{when}\PYG{p}{:}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{always}
+\PYG{+w}{    }\PYG{n+nt}{paths}\PYG{p}{:}
+\PYG{+w}{      }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/WrapContadoresCCTb/results.xml}
+\PYG{+w}{    }\PYG{n+nt}{reports}\PYG{p}{:}
+\PYG{+w}{      }\PYG{n+nt}{junit}\PYG{p}{:}
+\PYG{+w}{        }\PYG{p+pIndicator}{\PYGZhy{}}\PYG{+w}{ }\PYG{l+lScalar+lScalarPlain}{Linux/Trabajo/WrapContadoresCCTb/results.xml}
+
+\end{Verbatim}

@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{cocotb}
+\PYG{k+kn}{from} \PYG{n+nn}{cocotb.triggers} \PYG{k+kn}{import} \PYG{n}{Timer}
+\PYG{k+kn}{from} \PYG{n+nn}{cocotb.triggers} \PYG{k+kn}{import} \PYG{n}{RisingEdge}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{c+c1}{\PYGZsh{} import oct2py}
+\end{Verbatim}
